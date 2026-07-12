@@ -36,6 +36,88 @@ const emptyForm = (): ProjectFormValues => ({
   memberIds: [],
 });
 
+// ── ProjectForm extracted to module level to prevent remounting on every render ──
+function ProjectForm({
+  form,
+  onChange,
+  onSubmit,
+  isCreate,
+  submitting,
+  isAdmin,
+  managerOptions,
+  memberOptions,
+  loadingManagers,
+  loadingMembers,
+}: {
+  form: ProjectFormValues;
+  onChange: (patch: Partial<ProjectFormValues>) => void;
+  onSubmit: () => void;
+  isCreate: boolean;
+  submitting: boolean;
+  isAdmin: boolean;
+  managerOptions: SelectOption[];
+  memberOptions: SelectOption[];
+  loadingManagers: boolean;
+  loadingMembers: boolean;
+}) {
+  const canSubmit = form.title.trim().length > 0 && !submitting;
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-slate-400">Title *</label>
+        <Input
+          placeholder="Project title"
+          value={form.title}
+          onChange={(e) => onChange({ title: e.target.value })}
+        />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-slate-400">Description</label>
+        <Textarea
+          placeholder="Project description"
+          rows={3}
+          value={form.description}
+          onChange={(e) => onChange({ description: e.target.value })}
+        />
+      </div>
+
+      {isAdmin && (
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-slate-400">Manager</label>
+          <CustomSelect
+            options={managerOptions}
+            value={form.managerId}
+            onChange={(v) => onChange({ managerId: Number(v) })}
+            placeholder="Select a manager…"
+            loading={loadingManagers}
+          />
+        </div>
+      )}
+
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-slate-400">Team Members</label>
+        <MultiSelect
+          options={memberOptions}
+          value={form.memberIds}
+          onChange={(v) => onChange({ memberIds: v.map(Number) })}
+          placeholder="Select team members…"
+          loading={loadingMembers}
+        />
+      </div>
+
+      <div className="flex justify-end gap-3 pt-2">
+        <Button
+          type="button"
+          onClick={onSubmit}
+          disabled={!canSubmit}
+        >
+          {submitting ? <><Spinner className="h-4 w-4" /> Saving…</> : isCreate ? "Create Project" : "Save Changes"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function ProjectsPage() {
   const { data, loading, error, refetch } = useProjects();
   const { user } = useAuthContext();
@@ -141,76 +223,6 @@ export default function ProjectsPage() {
     }
   };
 
-  // ── Shared form UI ─────────────────────────────────────────────────────
-  const ProjectForm = ({
-    form,
-    onChange,
-    onSubmit,
-    isCreate,
-  }: {
-    form: ProjectFormValues;
-    onChange: (patch: Partial<ProjectFormValues>) => void;
-    onSubmit: () => void;
-    isCreate: boolean;
-  }) => {
-    const canSubmit = form.title.trim().length > 0 && !submitting;
-    return (
-      <div className="space-y-4">
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Title *</label>
-          <Input
-            placeholder="Project title"
-            value={form.title}
-            onChange={(e) => onChange({ title: e.target.value })}
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Description</label>
-          <Textarea
-            placeholder="Project description"
-            rows={3}
-            value={form.description}
-            onChange={(e) => onChange({ description: e.target.value })}
-          />
-        </div>
-
-        {isAdmin && (
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-400">Manager</label>
-            <CustomSelect
-              options={managerOptions}
-              value={form.managerId}
-              onChange={(v) => onChange({ managerId: Number(v) })}
-              placeholder="Select a manager…"
-              loading={loadingManagers}
-            />
-          </div>
-        )}
-
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Team Members</label>
-          <MultiSelect
-            options={memberOptions}
-            value={form.memberIds}
-            onChange={(v) => onChange({ memberIds: v.map(Number) })}
-            placeholder="Select team members…"
-            loading={loadingMembers}
-          />
-        </div>
-
-        <div className="flex justify-end gap-3 pt-2">
-          <Button
-            type="button"
-            onClick={onSubmit}
-            disabled={!canSubmit}
-          >
-            {submitting ? <><Spinner className="h-4 w-4" /> Saving…</> : isCreate ? "Create Project" : "Save Changes"}
-          </Button>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <section className="space-y-6">
       {/* Header */}
@@ -276,6 +288,12 @@ export default function ProjectsPage() {
           onChange={(patch) => setCreateForm((prev) => ({ ...prev, ...patch }))}
           onSubmit={handleCreate}
           isCreate
+          submitting={submitting}
+          isAdmin={isAdmin}
+          managerOptions={managerOptions}
+          memberOptions={memberOptions}
+          loadingManagers={loadingManagers}
+          loadingMembers={loadingMembers}
         />
       </Modal>
 
@@ -286,6 +304,12 @@ export default function ProjectsPage() {
           onChange={(patch) => setEditForm((prev) => ({ ...prev, ...patch }))}
           onSubmit={handleUpdate}
           isCreate={false}
+          submitting={submitting}
+          isAdmin={isAdmin}
+          managerOptions={managerOptions}
+          memberOptions={memberOptions}
+          loadingManagers={loadingManagers}
+          loadingMembers={loadingMembers}
         />
       </Modal>
 

@@ -54,6 +54,126 @@ const STATUS_OPTIONS: SelectOption[] = [
   { value: "DONE", label: "Done" },
 ];
 
+// ── TaskForm extracted to module level to prevent remounting on every render ──
+function TaskForm({
+  form,
+  onChange,
+  onSubmit,
+  memberOptions,
+  loadingMembers,
+  isCreate,
+  submitting,
+  projectOptions,
+  loadingProjects,
+}: {
+  form: TaskFormValues;
+  onChange: (patch: Partial<TaskFormValues>) => void;
+  onSubmit: () => void;
+  memberOptions: SelectOption[];
+  loadingMembers: boolean;
+  isCreate: boolean;
+  submitting: boolean;
+  projectOptions: SelectOption[];
+  loadingProjects: boolean;
+}) {
+  const canSubmit =
+    form.title.trim().length > 0 &&
+    form.projectId !== null &&
+    form.assignedTo !== null &&
+    !submitting;
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      {/* Title */}
+      <div className="sm:col-span-2">
+        <label className="mb-1.5 block text-xs font-medium text-slate-400">Title *</label>
+        <Input
+          placeholder="Task title"
+          value={form.title}
+          onChange={(e) => onChange({ title: e.target.value })}
+        />
+      </div>
+
+      {/* Description */}
+      <div className="sm:col-span-2">
+        <label className="mb-1.5 block text-xs font-medium text-slate-400">Description</label>
+        <Textarea
+          placeholder="Task description"
+          rows={3}
+          value={form.description}
+          onChange={(e) => onChange({ description: e.target.value })}
+        />
+      </div>
+
+      {/* Project */}
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-slate-400">Project *</label>
+        <CustomSelect
+          options={projectOptions}
+          value={form.projectId}
+          onChange={(v) => {
+            onChange({ projectId: Number(v), assignedTo: null });
+          }}
+          placeholder="Select a project…"
+          loading={loadingProjects}
+        />
+      </div>
+
+      {/* Assign To */}
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-slate-400">Assign To *</label>
+        <CustomSelect
+          options={memberOptions}
+          value={form.assignedTo}
+          onChange={(v) => onChange({ assignedTo: Number(v) })}
+          placeholder={form.projectId ? "Select a member…" : "Select project first"}
+          loading={loadingMembers}
+          disabled={!form.projectId}
+        />
+      </div>
+
+      {/* Priority */}
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-slate-400">Priority</label>
+        <CustomSelect
+          options={PRIORITY_OPTIONS}
+          value={form.priority}
+          onChange={(v) => onChange({ priority: String(v) })}
+          placeholder="Select priority…"
+        />
+      </div>
+
+      {/* Status */}
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-slate-400">Status</label>
+        <CustomSelect
+          options={STATUS_OPTIONS}
+          value={form.status}
+          onChange={(v) => onChange({ status: String(v) })}
+          placeholder="Select status…"
+        />
+      </div>
+
+      {/* Due Date */}
+      <div className="sm:col-span-2">
+        <label className="mb-1.5 block text-xs font-medium text-slate-400">Due Date</label>
+        <Input
+          type="date"
+          value={form.dueDate}
+          onChange={(e) => onChange({ dueDate: e.target.value })}
+          className="[color-scheme:dark]"
+        />
+      </div>
+
+      <div className="flex justify-end gap-3 pt-2 sm:col-span-2">
+        <Button type="button" onClick={onSubmit} disabled={!canSubmit}>
+          {submitting ? <><Spinner className="h-4 w-4" /> Saving…</> : isCreate ? "Create Task" : "Save Changes"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function TasksPage() {
   const { data, loading, error, refetch } = useTasks();
   const { data: projects, loading: loadingProjects } = useProjects();
@@ -170,120 +290,6 @@ export default function TasksPage() {
     }
   };
 
-  // ── Shared form UI ─────────────────────────────────────────────────────
-  function TaskForm({
-    form,
-    onChange,
-    onSubmit,
-    memberOptions,
-    loadingMembers,
-    isCreate,
-  }: {
-    form: TaskFormValues;
-    onChange: (patch: Partial<TaskFormValues>) => void;
-    onSubmit: () => void;
-    memberOptions: SelectOption[];
-    loadingMembers: boolean;
-    isCreate: boolean;
-  }) {
-    const canSubmit =
-      form.title.trim().length > 0 &&
-      form.projectId !== null &&
-      form.assignedTo !== null &&
-      !submitting;
-
-    return (
-      <div className="grid gap-4 sm:grid-cols-2">
-        {/* Title */}
-        <div className="sm:col-span-2">
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Title *</label>
-          <Input
-            placeholder="Task title"
-            value={form.title}
-            onChange={(e) => onChange({ title: e.target.value })}
-          />
-        </div>
-
-        {/* Description */}
-        <div className="sm:col-span-2">
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Description</label>
-          <Textarea
-            placeholder="Task description"
-            rows={3}
-            value={form.description}
-            onChange={(e) => onChange({ description: e.target.value })}
-          />
-        </div>
-
-        {/* Project */}
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Project *</label>
-          <CustomSelect
-            options={projectOptions}
-            value={form.projectId}
-            onChange={(v) => {
-              onChange({ projectId: Number(v), assignedTo: null });
-            }}
-            placeholder="Select a project…"
-            loading={loadingProjects}
-          />
-        </div>
-
-        {/* Assign To */}
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Assign To *</label>
-          <CustomSelect
-            options={memberOptions}
-            value={form.assignedTo}
-            onChange={(v) => onChange({ assignedTo: Number(v) })}
-            placeholder={form.projectId ? "Select a member…" : "Select project first"}
-            loading={loadingMembers}
-            disabled={!form.projectId}
-          />
-        </div>
-
-        {/* Priority */}
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Priority</label>
-          <CustomSelect
-            options={PRIORITY_OPTIONS}
-            value={form.priority}
-            onChange={(v) => onChange({ priority: String(v) })}
-            placeholder="Select priority…"
-          />
-        </div>
-
-        {/* Status */}
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Status</label>
-          <CustomSelect
-            options={STATUS_OPTIONS}
-            value={form.status}
-            onChange={(v) => onChange({ status: String(v) })}
-            placeholder="Select status…"
-          />
-        </div>
-
-        {/* Due Date */}
-        <div className="sm:col-span-2">
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Due Date</label>
-          <Input
-            type="date"
-            value={form.dueDate}
-            onChange={(e) => onChange({ dueDate: e.target.value })}
-            className="[color-scheme:dark]"
-          />
-        </div>
-
-        <div className="flex justify-end gap-3 pt-2 sm:col-span-2">
-          <Button type="button" onClick={onSubmit} disabled={!canSubmit}>
-            {submitting ? <><Spinner className="h-4 w-4" /> Saving…</> : isCreate ? "Create Task" : "Save Changes"}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <section className="space-y-6">
       {/* Header */}
@@ -381,6 +387,9 @@ export default function TasksPage() {
           memberOptions={buildMemberOptions(createMembers)}
           loadingMembers={loadingCreateMembers}
           isCreate
+          submitting={submitting}
+          projectOptions={projectOptions}
+          loadingProjects={loadingProjects}
         />
       </Modal>
 
@@ -393,6 +402,9 @@ export default function TasksPage() {
           memberOptions={buildMemberOptions(editMembers)}
           loadingMembers={loadingEditMembers}
           isCreate={false}
+          submitting={submitting}
+          projectOptions={projectOptions}
+          loadingProjects={loadingProjects}
         />
       </Modal>
 
