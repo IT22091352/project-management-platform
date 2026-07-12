@@ -30,8 +30,9 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-screen bg-slate-950 text-slate-100">
+      <body className="min-h-screen bg-slate-950 text-slate-100" suppressHydrationWarning>
         <AuthProvider>
           {children}
           <AppToaster />
