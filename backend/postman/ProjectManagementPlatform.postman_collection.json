@@ -1,0 +1,340 @@
+{
+  "info": {
+    "name": "Project Management Platform",
+    "_postman_id": "e45a7c7f-3cf5-4c63-9b74-3f7d1d20a5c7",
+    "description": "Collection for auth, users, projects, tasks, comments, and dashboards.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "1" },
+    { "key": "projectId", "value": "1" },
+    { "key": "taskId", "value": "1" },
+    { "key": "commentId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"secret123\",\n  \"role\": \"TEAM_MEMBER\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"secret123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/auth/profile"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/users"
+          }
+        },
+        {
+          "name": "Get User By Id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Manager One\",\n  \"email\": \"manager@example.com\",\n  \"password\": \"secret123\",\n  \"role\": \"PROJECT_MANAGER\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/users/{{userId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "List Projects",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/projects"
+          }
+        },
+        {
+          "name": "Project Details",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/projects/{{projectId}}"
+          }
+        },
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/projects",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Website Revamp\",\n  \"description\": \"Frontend and backend refresh\",\n  \"managerId\": 1,\n  \"memberIds\": [2, 3]\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Project",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/projects/{{projectId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Project Title\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Project",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/projects/{{projectId}}"
+          }
+        },
+        {
+          "name": "Assign Members",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/projects/{{projectId}}/members",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberIds\": [2, 3]\n}"
+            }
+          }
+        },
+        {
+          "name": "Remove Member",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/projects/{{projectId}}/members/{{userId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "List Tasks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/tasks"
+          }
+        },
+        {
+          "name": "My Tasks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/tasks/my-tasks"
+          }
+        },
+        {
+          "name": "Task Details",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/tasks/{{taskId}}"
+          }
+        },
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Design Homepage\",\n  \"description\": \"Create homepage wireframes\",\n  \"projectId\": 1,\n  \"assignedTo\": 2,\n  \"priority\": \"HIGH\",\n  \"status\": \"TODO\",\n  \"dueDate\": \"2026-08-01T00:00:00.000Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/tasks/{{taskId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Task Title\",\n  \"priority\": \"MEDIUM\",\n  \"status\": \"IN_PROGRESS\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Task",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/tasks/{{taskId}}"
+          }
+        },
+        {
+          "name": "Assign Task",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/tasks/{{taskId}}/assign",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignedTo\": 2\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/tasks/{{taskId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DONE\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Add Task Comment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/tasks/{{taskId}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Looks good to me\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Create Comment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskId\": 1,\n  \"comment\": \"Please review this task\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Comments By Task",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/comments/task/{{taskId}}"
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/comments/{{commentId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Admin Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/dashboard/admin"
+          }
+        },
+        {
+          "name": "Manager Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/dashboard/manager"
+          }
+        },
+        {
+          "name": "Member Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/dashboard/member"
+          }
+        }
+      ]
+    }
+  ]
+}
