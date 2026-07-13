@@ -13,11 +13,19 @@ const setAuthCookie = (res, token) => {
   res.cookie("token", token, cookieOptions);
 };
 
-const register = asyncHandler(async (req, res) => {
-  const result = await authService.register(req.body);
-  setAuthCookie(res, result.token);
-
-  return sendSuccess(res, 201, "User registered successfully", result);
+const register = asyncHandler(async (req, res, next) => {
+  try {
+    const result = await authService.register(req.body);
+    setAuthCookie(res, result.token);
+    return sendSuccess(res, 201, "User registered successfully", result);
+  } catch (error) {
+    console.error("REGISTER_ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+      stack: error.stack,
+    });
+  }
 });
 
 const login = asyncHandler(async (req, res) => {
