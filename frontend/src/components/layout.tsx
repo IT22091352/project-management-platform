@@ -8,6 +8,7 @@ import { Bell, ChevronDown, LayoutDashboard, LogOut, Menu, Settings, User } from
 import { useAuthContext } from "@/context/auth-context";
 import { logout as logoutService } from "@/services/auth.service";
 import { Button, Card } from "./ui";
+import { NotificationsDropdown } from "./NotificationsDropdown";
 
 const navItems = [
   { href: "/dashboard/admin", label: "Dashboard", roles: ["ADMIN"] },
@@ -86,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="ml-auto flex items-center gap-3">
-                <Button variant="ghost"><Bell className="h-5 w-5" /></Button>
+                <NotificationsDropdown />
                 <div className="relative">
                   <button onClick={() => setMenuOpen((value) => !value)} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-left transition hover:bg-white/10">
                     <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-300">

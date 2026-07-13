@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const AppError = require("../utils/app-error");
+const notificationsService = require("./notifications.service");
 
 const projectSelect = {
   id: true,
@@ -208,6 +209,39 @@ const createProject = async (currentUser, payload) => {
     return project;
   });
 
+  // Notify ADMINs if PM created the project
+  if (currentUser.role === "PROJECT_MANAGER") {
+    const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+    for (const admin of admins) {
+      await notificationsService.createNotification({
+        userId: admin.id,
+        actorId: currentUser.id,
+        title: "New Project Created",
+        message: `${currentUser.name} created a new project: ${createdProject.title}.`,
+        type: "SYSTEM",
+        priority: "MEDIUM",
+        referenceId: createdProject.id,
+        referenceType: "Project",
+        route: `/projects`,
+      });
+    }
+  }
+
+  // Notify assigned PM if different from creator
+  if (managerId !== currentUser.id) {
+    await notificationsService.createNotification({
+      userId: managerId,
+      actorId: currentUser.id,
+      title: "Project Assigned",
+      message: `You have been assigned as the Project Manager for ${createdProject.title}.`,
+      type: "PROJECT_MANAGER_ASSIGNED",
+      priority: "HIGH",
+      referenceId: createdProject.id,
+      referenceType: "Project",
+      route: `/projects`,
+    });
+  }
+
   return getProjectById(currentUser, createdProject.id);
 };
 
@@ -260,6 +294,35 @@ const updateProject = async (currentUser, id, payload) => {
     where: { id },
     data,
   });
+
+  if (project.managerId !== currentUser.id) {
+    await notificationsService.createNotification({
+      userId: project.managerId,
+      actorId: currentUser.id,
+      title: "Project Updated",
+      message: `Project ${project.title} has been updated.`,
+      type: "PROJECT_UPDATED",
+      priority: "LOW",
+      referenceId: id,
+      referenceType: "Project",
+      route: `/projects`,
+    });
+  }
+
+  // If manager changed, notify the new manager
+  if (data.managerId && data.managerId !== project.managerId) {
+    await notificationsService.createNotification({
+      userId: data.managerId,
+      actorId: currentUser.id,
+      title: "Project Assigned",
+      message: `You have been assigned as the Project Manager for ${data.title || project.title}.`,
+      type: "PROJECT_MANAGER_ASSIGNED",
+      priority: "HIGH",
+      referenceId: id,
+      referenceType: "Project",
+      route: `/projects`,
+    });
+  }
 
   return getProjectById(currentUser, id);
 };
@@ -315,6 +378,12 @@ const assignMembers = async (currentUser, projectId, memberIds) => {
     throw new AppError("One or more member IDs are invalid", 400);
   }
 
+  const existingMemberships = await prisma.projectMember.findMany({
+    where: { projectId },
+    select: { userId: true },
+  });
+  const existingMemberIds = new Set(existingMemberships.map(m => m.userId));
+
   for (const userId of normalizedMemberIds) {
     if (userId !== project.managerId) {
       await prisma.projectMember.upsert({
@@ -330,6 +399,20 @@ const assignMembers = async (currentUser, projectId, memberIds) => {
           userId,
         },
       });
+
+      if (!existingMemberIds.has(userId)) {
+        await notificationsService.createNotification({
+          userId: userId,
+          actorId: currentUser.id,
+          title: "Added to Project",
+          message: `You have been added to the project ${project.title}.`,
+          type: "PROJECT_MEMBER_ADDED",
+          priority: "MEDIUM",
+          referenceId: projectId,
+          referenceType: "Project",
+          route: `/projects`,
+        });
+      }
     }
   }
 

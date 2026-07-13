@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const AppError = require("../utils/app-error");
+const notificationsService = require("./notifications.service");
 
 const taskSelect = {
   id: true,
@@ -160,7 +161,7 @@ const createTask = async (currentUser, payload) => {
     await ensureProjectMember(projectId, assignedTo);
   }
 
-  return prisma.task.create({
+  const createdTask = await prisma.task.create({
     data: {
       title: payload.title.trim(),
       description: payload.description ? payload.description.trim() : null,
@@ -172,6 +173,20 @@ const createTask = async (currentUser, payload) => {
     },
     select: taskSelect,
   });
+
+  await notificationsService.createNotification({
+    userId: assignedTo,
+    actorId: currentUser.id,
+    title: "Task Assigned",
+    message: `You have been assigned to task: ${createdTask.title}`,
+    type: "TASK_ASSIGNED",
+    priority: "HIGH",
+    referenceId: createdTask.id,
+    referenceType: "Task",
+    route: `/tasks`,
+  });
+
+  return createdTask;
 };
 
 const updateTask = async (currentUser, id, payload) => {
@@ -241,11 +256,28 @@ const updateTask = async (currentUser, id, payload) => {
     data.assignedTo = assignedTo;
   }
 
-  return prisma.task.update({
+  const updatedTask = await prisma.task.update({
     where: { id },
     data,
     select: taskSelect,
   });
+
+  const notifyUserId = data.assignedTo || task.assignedTo;
+  if (notifyUserId) {
+    await notificationsService.createNotification({
+      userId: notifyUserId,
+      actorId: currentUser.id,
+      title: "Task Updated",
+      message: `Task ${updatedTask.title} has been updated.`,
+      type: "TASK_UPDATED",
+      priority: "LOW",
+      referenceId: id,
+      referenceType: "Task",
+      route: `/tasks`,
+    });
+  }
+
+  return updatedTask;
 };
 
 const deleteTask = async (currentUser, id) => {
@@ -308,11 +340,25 @@ const assignTask = async (currentUser, id, assignedTo) => {
     await ensureProjectMember(task.projectId, assigneeId);
   }
 
-  return prisma.task.update({
+  const updatedTask = await prisma.task.update({
     where: { id },
     data: { assignedTo: assigneeId },
     select: taskSelect,
   });
+
+  await notificationsService.createNotification({
+    userId: assigneeId,
+    actorId: currentUser.id,
+    title: "Task Assigned",
+    message: `You have been assigned to task: ${updatedTask.title}`,
+    type: "TASK_ASSIGNED",
+    priority: "HIGH",
+    referenceId: id,
+    referenceType: "Task",
+    route: `/tasks`,
+  });
+
+  return updatedTask;
 };
 
 const updateStatus = async (currentUser, id, status) => {
@@ -338,11 +384,28 @@ const updateStatus = async (currentUser, id, status) => {
     throw new AppError("Forbidden", 403);
   }
 
-  return prisma.task.update({
+  const updatedTask = await prisma.task.update({
     where: { id },
     data: { status },
     select: taskSelect,
   });
+
+  // Notify Project Manager
+  if (task.project.managerId) {
+    await notificationsService.createNotification({
+      userId: task.project.managerId,
+      actorId: currentUser.id,
+      title: "Task Status Changed",
+      message: `Task ${updatedTask.title} status changed to ${status}`,
+      type: "TASK_STATUS_CHANGED",
+      priority: "LOW",
+      referenceId: id,
+      referenceType: "Task",
+      route: `/tasks`,
+    });
+  }
+
+  return updatedTask;
 };
 
 const addComment = async (currentUser, id, comment) => {
@@ -377,7 +440,7 @@ const addComment = async (currentUser, id, comment) => {
     }
   }
 
-  return prisma.comment.create({
+  const createdComment = await prisma.comment.create({
     data: {
       comment: comment.trim(),
       taskId: id,
@@ -397,6 +460,38 @@ const addComment = async (currentUser, id, comment) => {
       },
     },
   });
+
+  // Notify Assignee
+  if (task.assignedTo) {
+    await notificationsService.createNotification({
+      userId: task.assignedTo,
+      actorId: currentUser.id,
+      title: "New Comment",
+      message: `New comment on task`,
+      type: "COMMENT_ADDED",
+      priority: "LOW",
+      referenceId: id,
+      referenceType: "Task",
+      route: `/tasks`,
+    });
+  }
+
+  // Notify Project Manager
+  if (task.project && task.project.managerId) {
+    await notificationsService.createNotification({
+      userId: task.project.managerId,
+      actorId: currentUser.id,
+      title: "New Comment",
+      message: `New comment on task`,
+      type: "COMMENT_ADDED",
+      priority: "LOW",
+      referenceId: id,
+      referenceType: "Task",
+      route: `/tasks`,
+    });
+  }
+
+  return createdComment;
 };
 
 module.exports = {

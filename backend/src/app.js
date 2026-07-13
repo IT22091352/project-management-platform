@@ -11,6 +11,7 @@ const projectsRoutes = require("./routes/projects.routes");
 const tasksRoutes = require("./routes/tasks.routes");
 const commentsRoutes = require("./routes/comments.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
+const notificationsRoutes = require("./routes/notifications.routes");
 const { notFound, errorHandler } = require("./middleware/error.middleware");
 
 const app = express();
@@ -38,6 +39,7 @@ app.use("/api/projects", projectsRoutes);
 app.use("/api/tasks", tasksRoutes);
 app.use("/api/comments", commentsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

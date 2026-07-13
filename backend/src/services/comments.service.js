@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const AppError = require("../utils/app-error");
+const notificationsService = require("./notifications.service");
 
 const commentSelect = {
   id: true,
@@ -81,7 +82,7 @@ const createComment = async (currentUser, payload) => {
     throw new AppError("Forbidden", 403);
   }
 
-  return prisma.comment.create({
+  const createdComment = await prisma.comment.create({
     data: {
       comment: payload.comment.trim(),
       taskId,
@@ -89,6 +90,38 @@ const createComment = async (currentUser, payload) => {
     },
     select: commentSelect,
   });
+
+  // Notify Assignee
+  if (task.assignedTo) {
+    await notificationsService.createNotification({
+      userId: task.assignedTo,
+      actorId: currentUser.id,
+      title: "New Comment",
+      message: `New comment on task: ${task.project ? 'task' : 'task'}`, // We don't have task.title, just task id
+      type: "COMMENT_ADDED",
+      priority: "LOW",
+      referenceId: taskId,
+      referenceType: "Task",
+      route: `/tasks`,
+    });
+  }
+
+  // Notify Project Manager
+  if (task.project && task.project.managerId) {
+    await notificationsService.createNotification({
+      userId: task.project.managerId,
+      actorId: currentUser.id,
+      title: "New Comment",
+      message: `New comment on task`,
+      type: "COMMENT_ADDED",
+      priority: "LOW",
+      referenceId: taskId,
+      referenceType: "Task",
+      route: `/tasks`,
+    });
+  }
+
+  return createdComment;
 };
 
 const listCommentsByTask = async (currentUser, taskId) => {

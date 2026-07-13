@@ -1,0 +1,23 @@
+-- CreateTable
+CREATE TABLE `Notification` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `userId` INTEGER NOT NULL,
+    `actorId` INTEGER NULL,
+    `title` VARCHAR(191) NOT NULL,
+    `message` VARCHAR(191) NOT NULL,
+    `type` ENUM('PROJECT_ASSIGNED', 'PROJECT_MANAGER_ASSIGNED', 'PROJECT_MEMBER_ADDED', 'PROJECT_UPDATED', 'TASK_ASSIGNED', 'TASK_UPDATED', 'TASK_STATUS_CHANGED', 'COMMENT_ADDED', 'SYSTEM') NOT NULL,
+    `priority` ENUM('LOW', 'MEDIUM', 'HIGH') NOT NULL DEFAULT 'LOW',
+    `isRead` BOOLEAN NOT NULL DEFAULT false,
+    `referenceId` INTEGER NULL,
+    `referenceType` VARCHAR(191) NULL,
+    `route` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `Notification` ADD CONSTRAINT `Notification_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Notification` ADD CONSTRAINT `Notification_actorId_fkey` FOREIGN KEY (`actorId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

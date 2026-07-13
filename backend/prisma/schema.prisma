@@ -25,6 +25,24 @@ enum Priority {
   HIGH
 }
 
+enum NotificationType {
+  PROJECT_ASSIGNED
+  PROJECT_MANAGER_ASSIGNED
+  PROJECT_MEMBER_ADDED
+  PROJECT_UPDATED
+  TASK_ASSIGNED
+  TASK_UPDATED
+  TASK_STATUS_CHANGED
+  COMMENT_ADDED
+  SYSTEM
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model User {
   id       Int    @id @default(autoincrement())
   name     String
@@ -46,6 +64,12 @@ model User {
 
   // Comments written by this user
   comments Comment[]
+
+  // Notifications received
+  notifications Notification[] @relation("ReceivedNotifications")
+
+  // Notifications triggered by this user
+  sentNotifications Notification[] @relation("SentNotifications")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -118,4 +142,21 @@ model ProjectMember {
   createdAt DateTime @default(now())
 
   @@unique([projectId, userId])
+}
+
+model Notification {
+  id            Int                  @id @default(autoincrement())
+  userId        Int
+  user          User                 @relation("ReceivedNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  actorId       Int?
+  actor         User?                @relation("SentNotifications", fields: [actorId], references: [id], onDelete: SetNull)
+  title         String
+  message       String
+  type          NotificationType
+  priority      NotificationPriority @default(LOW)
+  isRead        Boolean              @default(false)
+  referenceId   Int?
+  referenceType String?
+  route         String?
+  createdAt     DateTime             @default(now())
 }
