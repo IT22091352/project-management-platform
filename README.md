@@ -32,8 +32,8 @@ npm run dev
 Set these in `backend/.env`:
 
 ```env
-DATABASE_URL="mysql://root:Root12345@localhost:3306/project_management"
-JWT_SECRET=your_secret_key
+DATABASE_URL="mysql://username:password@localhost:3306/database_name"
+JWT_SECRET=your_jwt_secret_key_here
 PORT=5000
 ```
 
