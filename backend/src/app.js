@@ -16,10 +16,25 @@ const { notFound, errorHandler } = require("./middleware/error.middleware");
 
 const app = express();
 
+const allowedOrigins = process.env.FRONTEND_URL 
+  ? process.env.FRONTEND_URL.split(",") 
+  : ["http://localhost:3000", "https://project-management-platform-umber.vercel.app"];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",") : "http://localhost:3000",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      const vercelRegex = /^https:\/\/.*\.vercel\.app$/;
+      if (vercelRegex.test(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
+    optionsSuccessStatus: 204,
   })
 );
 app.use(express.json());
