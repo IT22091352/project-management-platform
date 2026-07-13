@@ -8,6 +8,7 @@ export type Project = {
   title: string;
   description?: string | null;
   managerId?: number | null;
+  createdBy?: number | null;
   manager?: { id?: number; name?: string | null; email?: string | null } | null;
   members?: { id: number; user: { id: number; name: string; email: string; role: string } }[];
   _count?: { tasks?: number; members?: number };

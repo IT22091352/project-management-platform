@@ -35,6 +35,9 @@ model User {
   // Projects managed by this user
   managedProjects Project[] @relation("ProjectManager")
 
+  // Projects created/owned by this user
+  createdProjects Project[] @relation("ProjectCreator")
+
   // Project memberships for task collaboration
   projectMemberships ProjectMember[]
 
@@ -53,8 +56,13 @@ model Project {
   title       String
   description String?
 
+  // The user currently assigned to manage the project
   managerId Int
   manager   User @relation("ProjectManager", fields: [managerId], references: [id])
+
+  // The user who originally created the project (immutable after creation)
+  createdBy Int
+  creator   User @relation("ProjectCreator", fields: [createdBy], references: [id])
 
   members ProjectMember[]
   tasks Task[]

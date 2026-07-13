@@ -7,7 +7,7 @@ type CommentItem = {
   id: number;
   comment: string;
   createdAt: string;
-  user?: { name?: string | null } | null;
+  user?: { id?: number | null; name?: string | null } | null;
 };
 
 export function useComments(taskId?: number) {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useComments } from "@/hooks/use-comments";
 import { useTasks } from "@/hooks/use-tasks";
+import { useAuthContext } from "@/context/auth-context";
 import { api, getErrorMessage } from "@/lib/api";
 import {
   Button,
@@ -20,6 +21,7 @@ import {
 
 export default function CommentsPage() {
   const { data: tasks, loading: loadingTasks } = useTasks();
+  const { user: currentUser } = useAuthContext();
   const [selectedTaskId, setSelectedTaskId] = useState<number | undefined>(undefined);
   const { data, loading, error, refetch } = useComments(selectedTaskId);
 
@@ -104,7 +106,12 @@ export default function CommentsPage() {
                 <div className="text-sm font-semibold text-white">{comment.user?.name}</div>
                 <div className="text-xs text-slate-400">{new Date(comment.createdAt).toLocaleString()}</div>
               </div>
-              <Button variant="danger" onClick={() => setConfirmId(comment.id)}>Delete</Button>
+              {/* Show Delete only for comment owner, ADMIN, or PROJECT_MANAGER */}
+              {(comment.user?.id === currentUser?.id ||
+                currentUser?.role === "ADMIN" ||
+                currentUser?.role === "PROJECT_MANAGER") && (
+                <Button variant="danger" onClick={() => setConfirmId(comment.id)}>Delete</Button>
+              )}
             </div>
             <p className="mt-3 text-sm leading-6 text-slate-200">{comment.comment}</p>
           </Card>

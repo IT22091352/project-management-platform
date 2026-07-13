@@ -6,6 +6,7 @@ const projectSelect = {
   title: true,
   description: true,
   managerId: true,
+  createdBy: true,
   createdAt: true,
   updatedAt: true,
   manager: {
@@ -14,6 +15,12 @@ const projectSelect = {
       name: true,
       email: true,
       role: true,
+    },
+  },
+  creator: {
+    select: {
+      id: true,
+      name: true,
     },
   },
   _count: {
@@ -149,6 +156,8 @@ const createProject = async (currentUser, payload) => {
         title: payload.title.trim(),
         description: payload.description ? payload.description.trim() : null,
         managerId,
+        // Record the original creator — never overwritten when manager changes
+        createdBy: currentUser.id,
       },
     });
 
@@ -262,13 +271,18 @@ const deleteProject = async (currentUser, id) => {
     throw new AppError("Project not found", 404);
   }
 
-  if (currentUser.role !== "ADMIN" && project.managerId !== currentUser.id) {
-    throw new AppError("Forbidden", 403);
+  // ADMIN can delete any project.
+  // PROJECT_MANAGER can only delete projects they personally created (createdBy).
+  // Being assigned as manager does NOT grant delete rights.
+  if (currentUser.role !== "ADMIN" && project.createdBy !== currentUser.id) {
+    throw new AppError(
+      "Only the project owner or an administrator can delete this project.",
+      403
+    );
   }
 
   await prisma.$transaction(async (tx) => {
     await tx.projectMember.deleteMany({ where: { projectId: id } });
-
     await tx.project.delete({ where: { id } });
   });
 

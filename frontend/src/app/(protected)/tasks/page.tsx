@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useTasks, type Task } from "@/hooks/use-tasks";
 import { useProjects } from "@/hooks/use-projects";
 import { useProjectMembers } from "@/hooks/use-project-members";
+import { useAuthContext } from "@/context/auth-context";
 import { api, getErrorMessage } from "@/lib/api";
 import {
   Button,
@@ -54,7 +55,8 @@ const STATUS_OPTIONS: SelectOption[] = [
   { value: "DONE", label: "Done" },
 ];
 
-// ── TaskForm extracted to module level to prevent remounting on every render ──
+// ── Full task form (ADMIN / PROJECT_MANAGER only) ─────────────────────────────
+// Extracted to module level to prevent remounting on every render
 function TaskForm({
   form,
   onChange,
@@ -191,19 +193,62 @@ function TaskForm({
   );
 }
 
+// ── Status-only modal (TEAM_MEMBER) ───────────────────────────────────────────
+// Extracted to module level to prevent remounting
+function UpdateStatusForm({
+  currentStatus,
+  onSubmit,
+  submitting,
+}: {
+  currentStatus: string;
+  onSubmit: (status: string) => void;
+  submitting: boolean;
+}) {
+  const [status, setStatus] = useState(currentStatus);
+  const canSubmit = status !== currentStatus && !submitting;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-slate-400">Status</label>
+        <CustomSelect
+          options={STATUS_OPTIONS}
+          value={status}
+          onChange={(v) => setStatus(String(v))}
+          placeholder="Select status…"
+        />
+      </div>
+      <div className="flex justify-end pt-2">
+        <Button type="button" onClick={() => onSubmit(status)} disabled={!canSubmit}>
+          {submitting ? <><Spinner className="h-4 w-4" /> Saving…</> : "Save Changes"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function TasksPage() {
   const { data, loading, error, refetch } = useTasks();
   const { data: projects, loading: loadingProjects } = useProjects();
+  const { user } = useAuthContext();
 
-  // Create modal state
+  // Role flags
+  const isTeamMember = user?.role === "TEAM_MEMBER";
+  const canManageTasks = user?.role === "ADMIN" || user?.role === "PROJECT_MANAGER";
+
+  // Create modal state (ADMIN / PROJECT_MANAGER only)
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<TaskFormValues>(emptyForm());
   const { data: createMembers, loading: loadingCreateMembers } = useProjectMembers(createForm.projectId);
 
-  // Edit modal state
+  // Full edit modal state (ADMIN / PROJECT_MANAGER only)
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [editForm, setEditForm] = useState<TaskFormValues>(emptyForm());
   const { data: editMembers, loading: loadingEditMembers } = useProjectMembers(editForm.projectId);
+
+  // Status-only modal state (TEAM_MEMBER only)
+  const [statusTask, setStatusTask] = useState<Task | null>(null);
+  const [statusSubmitting, setStatusSubmitting] = useState(false);
 
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -259,7 +304,7 @@ export default function TasksPage() {
     }
   };
 
-  // ── Open edit ──────────────────────────────────────────────────────────
+  // ── Open full edit (ADMIN / PROJECT_MANAGER) ───────────────────────────
   const openEdit = (task: Task) => {
     setEditForm({
       title: task.title,
@@ -273,7 +318,7 @@ export default function TasksPage() {
     setEditTask(task);
   };
 
-  // ── Update ─────────────────────────────────────────────────────────────
+  // ── Full update (ADMIN / PROJECT_MANAGER) ──────────────────────────────
   const handleUpdate = async () => {
     if (!editTask || !editForm.title.trim() || !editForm.projectId || !editForm.assignedTo) return;
     setSubmitting(true);
@@ -297,6 +342,22 @@ export default function TasksPage() {
     }
   };
 
+  // ── Status-only update (TEAM_MEMBER) — PATCH /api/tasks/:id/status ─────
+  const handleStatusUpdate = async (newStatus: string) => {
+    if (!statusTask) return;
+    setStatusSubmitting(true);
+    try {
+      await api.patch(`/tasks/${statusTask.id}/status`, { status: newStatus });
+      toast.success("Status updated");
+      setStatusTask(null);
+      await refetch();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setStatusSubmitting(false);
+    }
+  };
+
   // ── Delete ─────────────────────────────────────────────────────────────
   const handleDelete = async () => {
     if (!confirmId) return;
@@ -316,9 +377,16 @@ export default function TasksPage() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-white">Tasks</h1>
-          <p className="mt-1 text-sm text-slate-400">View tasks, update status, assign work, and manage priorities.</p>
+          <p className="mt-1 text-sm text-slate-400">
+            {isTeamMember
+              ? "View your assigned tasks and update their status."
+              : "View tasks, update status, assign work, and manage priorities."}
+          </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>Create Task</Button>
+        {/* Create Task — ADMIN and PROJECT_MANAGER only */}
+        {canManageTasks && (
+          <Button onClick={() => setCreateOpen(true)}>Create Task</Button>
+        )}
       </div>
 
       {/* Search + filters */}
@@ -390,15 +458,30 @@ export default function TasksPage() {
               )}
             </div>
 
+            {/* Action buttons — differ by role */}
             <div className="mt-4 flex gap-2">
-              <Button variant="secondary" onClick={() => openEdit(task)}>Update</Button>
-              <Button variant="danger" onClick={() => setConfirmId(task.id)}>Delete</Button>
+              {isTeamMember ? (
+                // TEAM_MEMBER: status update only
+                <Button variant="secondary" onClick={() => setStatusTask(task)}>
+                  Update Status
+                </Button>
+              ) : (
+                // ADMIN / PROJECT_MANAGER: full edit + delete
+                <>
+                  <Button variant="secondary" onClick={() => openEdit(task)}>Update</Button>
+                  <Button variant="danger" onClick={() => setConfirmId(task.id)}>Delete</Button>
+                </>
+              )}
             </div>
           </Card>
         ))}
       </div>
 
-      {/* Create modal */}
+      {!loading && filtered.length === 0 && (
+        <Card className="p-6 text-center text-sm text-slate-400">No tasks found.</Card>
+      )}
+
+      {/* Create modal — ADMIN / PROJECT_MANAGER only */}
       <Modal open={createOpen} title="Create Task" onClose={() => setCreateOpen(false)}>
         <TaskForm
           form={createForm}
@@ -414,7 +497,7 @@ export default function TasksPage() {
         />
       </Modal>
 
-      {/* Edit modal */}
+      {/* Full edit modal — ADMIN / PROJECT_MANAGER only */}
       <Modal open={editTask !== null} title="Update Task" onClose={() => setEditTask(null)}>
         <TaskForm
           form={editForm}
@@ -430,6 +513,23 @@ export default function TasksPage() {
         />
       </Modal>
 
+      {/* Status-only modal — TEAM_MEMBER only */}
+      <Modal
+        open={statusTask !== null}
+        title="Update Status"
+        onClose={() => setStatusTask(null)}
+      >
+        {statusTask && (
+          <UpdateStatusForm
+            key={statusTask.id}
+            currentStatus={statusTask.status}
+            onSubmit={handleStatusUpdate}
+            submitting={statusSubmitting}
+          />
+        )}
+      </Modal>
+
+      {/* Delete confirmation — ADMIN / PROJECT_MANAGER only */}
       <ConfirmDialog
         open={confirmId !== null}
         title="Delete task"

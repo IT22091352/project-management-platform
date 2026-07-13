@@ -122,6 +122,8 @@ export default function ProjectsPage() {
   const { data, loading, error, refetch } = useProjects();
   const { user } = useAuthContext();
   const isAdmin = user?.role === "ADMIN";
+  // TEAM_MEMBER has read-only access to projects
+  const canManageProjects = user?.role === "ADMIN" || user?.role === "PROJECT_MANAGER";
 
   // Role-filtered user lists for dropdowns
   const { data: managers, loading: loadingManagers } = useUsers(isAdmin ? "PROJECT_MANAGER" : undefined);
@@ -215,7 +217,6 @@ export default function ProjectsPage() {
       };
       if (isAdmin && editForm.managerId) payload.managerId = editForm.managerId;
 
-      // Debug log — verifies memberIds are never empty unless explicitly cleared
       console.log("[ProjectUpdate] payload:", JSON.stringify(payload, null, 2));
 
       await api.put(`/projects/${editProject.id}`, payload);
@@ -258,14 +259,16 @@ export default function ProjectsPage() {
           <p className="mt-1 text-sm text-slate-400">Create, update, search, and manage project membership.</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, description, manager…"
-            className="min-w-64"
-          />
-          <Button onClick={() => setCreateOpen(true)}>Create Project</Button>
-        </div>
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name, description, manager…"
+              className="min-w-64"
+            />
+            {canManageProjects && (
+              <Button onClick={() => setCreateOpen(true)}>Create Project</Button>
+            )}
+          </div>
       </div>
 
       {loading ? (
@@ -298,16 +301,21 @@ export default function ProjectsPage() {
                   )}
                 </div>
               </div>
-              <div className="flex shrink-0 gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => openEdit(project)}
-                  disabled={loadingEdit}
-                >
-                  {loadingEdit ? <><Spinner className="h-4 w-4" /> Loading…</> : "Update"}
-                </Button>
-                <Button variant="danger" onClick={() => setConfirmId(project.id)}>Delete</Button>
-              </div>
+              {canManageProjects && (
+                <div className="flex shrink-0 gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={() => openEdit(project)}
+                    disabled={loadingEdit}
+                  >
+                    {loadingEdit ? <><Spinner className="h-4 w-4" /> Loading…</> : "Update"}
+                  </Button>
+                  {/* Delete is only shown to ADMIN or the project's original creator */}
+                  {(isAdmin || project.createdBy === user?.id) && (
+                    <Button variant="danger" onClick={() => setConfirmId(project.id)}>Delete</Button>
+                  )}
+                </div>
+              )}
             </div>
           </Card>
         ))}
