@@ -130,6 +130,7 @@ export default function ProjectsPage() {
   const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [editProject, setEditProject] = useState<(typeof data)[0] | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -176,14 +177,31 @@ export default function ProjectsPage() {
   };
 
   // ── Update ─────────────────────────────────────────────────────────────
-  const openEdit = (project: (typeof data)[0]) => {
-    setEditForm({
-      title: project.title,
-      description: project.description ?? "",
-      managerId: project.managerId ?? null,
-      memberIds: (project.members ?? []).map((m) => m.user.id),
-    });
-    setEditProject(project);
+  // Fetch the full project (includes members) before opening the edit modal.
+  // The list endpoint uses a lean select that omits members — we need the
+  // detail endpoint so memberIds are correctly pre-populated.
+  const openEdit = async (project: (typeof data)[0]) => {
+    setLoadingEdit(true);
+    try {
+      const res = await api.get(`/projects/${project.id}`);
+      const full = res.data.data.project as {
+        title: string;
+        description?: string | null;
+        managerId?: number | null;
+        members?: { id: number; user: { id: number } }[];
+      };
+      setEditForm({
+        title: full.title,
+        description: full.description ?? "",
+        managerId: full.managerId ?? null,
+        memberIds: (full.members ?? []).map((m) => m.user.id),
+      });
+      setEditProject(project);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setLoadingEdit(false);
+    }
   };
 
   const handleUpdate = async () => {
@@ -197,9 +215,17 @@ export default function ProjectsPage() {
       };
       if (isAdmin && editForm.managerId) payload.managerId = editForm.managerId;
 
+      // Debug log — verifies memberIds are never empty unless explicitly cleared
+      console.log("[ProjectUpdate] payload:", JSON.stringify(payload, null, 2));
+
       await api.put(`/projects/${editProject.id}`, payload);
-      // sync members
-      await api.post(`/projects/${editProject.id}/members`, { memberIds: editForm.memberIds });
+
+      // Only sync members when there is at least one id to send.
+      // assignMembers endpoint rejects an empty array with 400.
+      if (editForm.memberIds.length > 0) {
+        await api.post(`/projects/${editProject.id}/members`, { memberIds: editForm.memberIds });
+      }
+
       toast.success("Project updated");
       setEditProject(null);
       await refetch();
@@ -273,7 +299,13 @@ export default function ProjectsPage() {
                 </div>
               </div>
               <div className="flex shrink-0 gap-2">
-                <Button variant="secondary" onClick={() => openEdit(project)}>Update</Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => openEdit(project)}
+                  disabled={loadingEdit}
+                >
+                  {loadingEdit ? <><Spinner className="h-4 w-4" /> Loading…</> : "Update"}
+                </Button>
                 <Button variant="danger" onClick={() => setConfirmId(project.id)}>Delete</Button>
               </div>
             </div>

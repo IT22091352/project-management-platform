@@ -65,6 +65,7 @@ function TaskForm({
   submitting,
   projectOptions,
   loadingProjects,
+  hasTeamMembers,
 }: {
   form: TaskFormValues;
   onChange: (patch: Partial<TaskFormValues>) => void;
@@ -75,11 +76,16 @@ function TaskForm({
   submitting: boolean;
   projectOptions: SelectOption[];
   loadingProjects: boolean;
+  /** true when the selected project has at least one TEAM_MEMBER */
+  hasTeamMembers: boolean;
 }) {
+  const noTeamMembers = form.projectId !== null && !loadingMembers && !hasTeamMembers;
+
   const canSubmit =
     form.title.trim().length > 0 &&
     form.projectId !== null &&
     form.assignedTo !== null &&
+    hasTeamMembers &&
     !submitting;
 
   return (
@@ -119,17 +125,28 @@ function TaskForm({
         />
       </div>
 
-      {/* Assign To */}
+      {/* Assign To — only TEAM_MEMBER users are shown */}
       <div>
         <label className="mb-1.5 block text-xs font-medium text-slate-400">Assign To *</label>
         <CustomSelect
           options={memberOptions}
           value={form.assignedTo}
           onChange={(v) => onChange({ assignedTo: Number(v) })}
-          placeholder={form.projectId ? "Select a member…" : "Select project first"}
+          placeholder={
+            !form.projectId
+              ? "Select project first"
+              : noTeamMembers
+              ? "No team members available"
+              : "Select a member…"
+          }
           loading={loadingMembers}
-          disabled={!form.projectId}
+          disabled={!form.projectId || noTeamMembers}
         />
+        {noTeamMembers && (
+          <p className="mt-1.5 text-xs text-amber-400">
+            No team members available for this project.
+          </p>
+        )}
       </div>
 
       {/* Priority */}
@@ -211,8 +228,11 @@ export default function TasksPage() {
 
   const projectOptions: SelectOption[] = projects.map((p) => ({ value: p.id, label: p.title }));
 
+  // Filter to TEAM_MEMBER only — business rule: tasks can only be assigned to team members
   const buildMemberOptions = (members: typeof createMembers): SelectOption[] =>
-    members.map((m) => ({ value: m.user.id, label: m.user.name }));
+    members
+      .filter((m) => m.user.role === "TEAM_MEMBER")
+      .map((m) => ({ value: m.user.id, label: m.user.name }));
 
   // ── Create ─────────────────────────────────────────────────────────────
   const handleCreate = async () => {
@@ -390,6 +410,7 @@ export default function TasksPage() {
           submitting={submitting}
           projectOptions={projectOptions}
           loadingProjects={loadingProjects}
+          hasTeamMembers={buildMemberOptions(createMembers).length > 0 || loadingCreateMembers}
         />
       </Modal>
 
@@ -405,6 +426,7 @@ export default function TasksPage() {
           submitting={submitting}
           projectOptions={projectOptions}
           loadingProjects={loadingProjects}
+          hasTeamMembers={buildMemberOptions(editMembers).length > 0 || loadingEditMembers}
         />
       </Modal>
 

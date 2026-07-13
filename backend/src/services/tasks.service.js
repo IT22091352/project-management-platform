@@ -151,6 +151,11 @@ const createTask = async (currentUser, payload) => {
     throw new AppError("Assigned user not found", 404);
   }
 
+  // Business rule: tasks can only be assigned to TEAM_MEMBER users
+  if (assignee.role !== "TEAM_MEMBER") {
+    throw new AppError("Tasks can only be assigned to team members.", 400);
+  }
+
   if (assignee.id !== project.managerId) {
     await ensureProjectMember(projectId, assignedTo);
   }
@@ -222,6 +227,11 @@ const updateTask = async (currentUser, id, payload) => {
 
     if (!assignee) {
       throw new AppError("Assigned user not found", 404);
+    }
+
+    // Business rule: tasks can only be assigned to TEAM_MEMBER users
+    if (assignee.role !== "TEAM_MEMBER") {
+      throw new AppError("Tasks can only be assigned to team members.", 400);
     }
 
     if (assignee.id !== task.project.managerId) {
