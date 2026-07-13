@@ -1,4 +1,5 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+export const API_BASE_URL = rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`;
 export const TOKEN_KEY = "pm_platform_token";
 export const USER_KEY = "pm_platform_user";
 export const ROLE_ROUTES = {
