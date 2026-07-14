@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTasks, type Task } from "@/hooks/use-tasks";
@@ -20,9 +20,11 @@ import {
   Spinner,
   StatusBadge,
   Textarea,
+  Dropdown,
   type SelectOption,
 } from "@/components/ui";
-
+import { Edit, Trash, Calendar, Folder, User, Clock, AlertCircle } from "lucide-react";
+ 
 type TaskFormValues = {
   title: string;
   description: string;
@@ -32,7 +34,7 @@ type TaskFormValues = {
   status: string;
   dueDate: string;
 };
-
+ 
 const emptyForm = (): TaskFormValues => ({
   title: "",
   description: "",
@@ -42,21 +44,19 @@ const emptyForm = (): TaskFormValues => ({
   status: "TODO",
   dueDate: "",
 });
-
+ 
 const PRIORITY_OPTIONS: SelectOption[] = [
   { value: "LOW", label: "Low" },
   { value: "MEDIUM", label: "Medium" },
   { value: "HIGH", label: "High" },
 ];
-
+ 
 const STATUS_OPTIONS: SelectOption[] = [
   { value: "TODO", label: "Todo" },
   { value: "IN_PROGRESS", label: "In Progress" },
   { value: "DONE", label: "Done" },
 ];
-
-// ── Full task form (ADMIN / PROJECT_MANAGER only) ─────────────────────────────
-// Extracted to module level to prevent remounting on every render
+ 
 function TaskForm({
   form,
   onChange,
@@ -78,58 +78,53 @@ function TaskForm({
   submitting: boolean;
   projectOptions: SelectOption[];
   loadingProjects: boolean;
-  /** true when the selected project has at least one TEAM_MEMBER */
   hasTeamMembers: boolean;
 }) {
   const noTeamMembers = form.projectId !== null && !loadingMembers && !hasTeamMembers;
-
+ 
   const canSubmit =
     form.title.trim().length > 0 &&
     form.projectId !== null &&
     form.assignedTo !== null &&
     hasTeamMembers &&
     !submitting;
-
+ 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      {/* Title */}
       <div className="sm:col-span-2">
-        <label className="mb-1.5 block text-xs font-medium text-slate-400">Title *</label>
+        <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Title *</label>
         <Input
           placeholder="Task title"
           value={form.title}
           onChange={(e) => onChange({ title: e.target.value })}
         />
       </div>
-
-      {/* Description */}
+ 
       <div className="sm:col-span-2">
-        <label className="mb-1.5 block text-xs font-medium text-slate-400">Description</label>
+        <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Description</label>
         <Textarea
-          placeholder="Task description"
+          placeholder="Describe the objective of this task..."
           rows={3}
           value={form.description}
           onChange={(e) => onChange({ description: e.target.value })}
         />
       </div>
-
-      {/* Project */}
+ 
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-400">Project *</label>
+        <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Project *</label>
         <CustomSelect
           options={projectOptions}
           value={form.projectId}
           onChange={(v) => {
             onChange({ projectId: Number(v), assignedTo: null });
           }}
-          placeholder="Select a project…"
+          placeholder="Select project"
           loading={loadingProjects}
         />
       </div>
-
-      {/* Assign To — only TEAM_MEMBER users are shown */}
+ 
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-400">Assign To *</label>
+        <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Assign To *</label>
         <CustomSelect
           options={memberOptions}
           value={form.assignedTo}
@@ -138,44 +133,41 @@ function TaskForm({
             !form.projectId
               ? "Select project first"
               : noTeamMembers
-              ? "No team members available"
-              : "Select a member…"
+              ? "No members available"
+              : "Select member"
           }
           loading={loadingMembers}
           disabled={!form.projectId || noTeamMembers}
         />
         {noTeamMembers && (
-          <p className="mt-1.5 text-xs text-amber-400">
-            No team members available for this project.
+          <p className="mt-1.5 text-xs text-amber-400 flex items-center gap-1">
+            <AlertCircle className="h-3.5 w-3.5" /> No members assigned to this project workspace.
           </p>
         )}
       </div>
-
-      {/* Priority */}
+ 
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-400">Priority</label>
+        <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Priority</label>
         <CustomSelect
           options={PRIORITY_OPTIONS}
           value={form.priority}
           onChange={(v) => onChange({ priority: String(v) })}
-          placeholder="Select priority…"
+          placeholder="Priority"
         />
       </div>
-
-      {/* Status */}
+ 
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-400">Status</label>
+        <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</label>
         <CustomSelect
           options={STATUS_OPTIONS}
           value={form.status}
           onChange={(v) => onChange({ status: String(v) })}
-          placeholder="Select status…"
+          placeholder="Status"
         />
       </div>
-
-      {/* Due Date */}
+ 
       <div className="sm:col-span-2">
-        <label className="mb-1.5 block text-xs font-medium text-slate-400">Due Date</label>
+        <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Due Date</label>
         <Input
           type="date"
           value={form.dueDate}
@@ -183,7 +175,7 @@ function TaskForm({
           className="[color-scheme:dark]"
         />
       </div>
-
+ 
       <div className="flex justify-end gap-3 pt-2 sm:col-span-2">
         <Button type="button" onClick={onSubmit} disabled={!canSubmit}>
           {submitting ? <><Spinner className="h-4 w-4" /> Saving…</> : isCreate ? "Create Task" : "Save Changes"}
@@ -192,9 +184,7 @@ function TaskForm({
     </div>
   );
 }
-
-// ── Status-only modal (TEAM_MEMBER) ───────────────────────────────────────────
-// Extracted to module level to prevent remounting
+ 
 function UpdateStatusForm({
   currentStatus,
   onSubmit,
@@ -206,16 +196,16 @@ function UpdateStatusForm({
 }) {
   const [status, setStatus] = useState(currentStatus);
   const canSubmit = status !== currentStatus && !submitting;
-
+ 
   return (
     <div className="space-y-4">
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-400">Status</label>
+        <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</label>
         <CustomSelect
           options={STATUS_OPTIONS}
           value={status}
           onChange={(v) => setStatus(String(v))}
-          placeholder="Select status…"
+          placeholder="Select status"
         />
       </div>
       <div className="flex justify-end pt-2">
@@ -226,38 +216,33 @@ function UpdateStatusForm({
     </div>
   );
 }
-
+ 
 export default function TasksPage() {
   const { data, loading, error, refetch } = useTasks();
   const { data: projects, loading: loadingProjects } = useProjects();
   const { user } = useAuthContext();
-
-  // Role flags
+ 
   const isTeamMember = user?.role === "TEAM_MEMBER";
   const canManageTasks = user?.role === "ADMIN" || user?.role === "PROJECT_MANAGER";
-
-  // Create modal state (ADMIN / PROJECT_MANAGER only)
+ 
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<TaskFormValues>(emptyForm());
   const { data: createMembers, loading: loadingCreateMembers } = useProjectMembers(createForm.projectId);
-
-  // Full edit modal state (ADMIN / PROJECT_MANAGER only)
+ 
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [editForm, setEditForm] = useState<TaskFormValues>(emptyForm());
   const { data: editMembers, loading: loadingEditMembers } = useProjectMembers(editForm.projectId);
-
-  // Status-only modal state (TEAM_MEMBER only)
+ 
   const [statusTask, setStatusTask] = useState<Task | null>(null);
   const [statusSubmitting, setStatusSubmitting] = useState(false);
-
+ 
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // Search / filter
+ 
   const [query, setQuery] = useState("");
   const [filterPriority, setFilterPriority] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
-
+ 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
     return data.filter((t) => {
@@ -270,16 +255,14 @@ export default function TasksPage() {
       return matchText && matchPriority && matchStatus;
     });
   }, [data, query, filterPriority, filterStatus]);
-
+ 
   const projectOptions: SelectOption[] = projects.map((p) => ({ value: p.id, label: p.title }));
-
-  // Filter to TEAM_MEMBER only — business rule: tasks can only be assigned to team members
+ 
   const buildMemberOptions = (members: typeof createMembers): SelectOption[] =>
     members
       .filter((m) => m.user.role === "TEAM_MEMBER")
       .map((m) => ({ value: m.user.id, label: m.user.name }));
-
-  // ── Create ─────────────────────────────────────────────────────────────
+ 
   const handleCreate = async () => {
     if (!createForm.title.trim() || !createForm.projectId || !createForm.assignedTo) return;
     setSubmitting(true);
@@ -303,8 +286,7 @@ export default function TasksPage() {
       setSubmitting(false);
     }
   };
-
-  // ── Open full edit (ADMIN / PROJECT_MANAGER) ───────────────────────────
+ 
   const openEdit = (task: Task) => {
     setEditForm({
       title: task.title,
@@ -317,8 +299,7 @@ export default function TasksPage() {
     });
     setEditTask(task);
   };
-
-  // ── Full update (ADMIN / PROJECT_MANAGER) ──────────────────────────────
+ 
   const handleUpdate = async () => {
     if (!editTask || !editForm.title.trim() || !editForm.projectId || !editForm.assignedTo) return;
     setSubmitting(true);
@@ -341,8 +322,7 @@ export default function TasksPage() {
       setSubmitting(false);
     }
   };
-
-  // ── Status-only update (TEAM_MEMBER) — PATCH /api/tasks/:id/status ─────
+ 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!statusTask) return;
     setStatusSubmitting(true);
@@ -357,8 +337,7 @@ export default function TasksPage() {
       setStatusSubmitting(false);
     }
   };
-
-  // ── Delete ─────────────────────────────────────────────────────────────
+ 
   const handleDelete = async () => {
     if (!confirmId) return;
     try {
@@ -370,31 +349,30 @@ export default function TasksPage() {
       toast.error(getErrorMessage(err));
     }
   };
-
+ 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-white">Tasks</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Tasks</h1>
           <p className="mt-1 text-sm text-slate-400">
             {isTeamMember
-              ? "View your assigned tasks and update their status."
-              : "View tasks, update status, assign work, and manage priorities."}
+              ? "Track your assigned task lists and submit progress updates."
+              : "Manage task creation, assignments, due dates, priorities, and workflow statuses."}
           </p>
         </div>
-        {/* Create Task — ADMIN and PROJECT_MANAGER only */}
         {canManageTasks && (
           <Button onClick={() => setCreateOpen(true)}>Create Task</Button>
         )}
       </div>
-
+ 
       {/* Search + filters */}
       <div className="flex flex-col gap-3 sm:flex-row">
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by title, project, assigned user…"
+          placeholder="Search tasks..."
           className="flex-1"
         />
         <CustomSelect
@@ -412,75 +390,90 @@ export default function TasksPage() {
           className="min-w-40"
         />
       </div>
-
+ 
       {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} lines={4} />)}
         </div>
       ) : null}
-      {error ? <Card className="p-4 text-rose-300">{error}</Card> : null}
-
+      {error ? <Card className="p-4 text-red-400 bg-red-950/20 border-red-900/50">{error}</Card> : null}
+ 
       {/* Task cards */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((task) => (
-          <Card key={task.id} className="p-5">
-            <div className="flex items-start justify-between gap-3">
-              <h3 className="text-lg font-semibold text-white leading-snug">{task.title}</h3>
-              <StatusBadge status={task.status} />
-            </div>
-
-            {task.description && (
-              <p className="mt-2 text-sm text-slate-300 line-clamp-2">{task.description}</p>
-            )}
-
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <PriorityBadge priority={task.priority} />
-            </div>
-
-            <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-400">
-              {task.project?.title && (
-                <span className="col-span-2">
-                  <span className="text-slate-500">Project: </span>
-                  <span className="font-medium text-slate-200">{task.project.title}</span>
-                </span>
-              )}
-              {task.assignee?.name && (
-                <span className="col-span-2">
-                  <span className="text-slate-500">Assigned: </span>
-                  <span className="font-medium text-slate-200">{task.assignee.name}</span>
-                </span>
-              )}
-              {task.dueDate && (
-                <span className="col-span-2">
-                  <span className="text-slate-500">Due: </span>
-                  <span className="font-medium text-slate-200">{new Date(task.dueDate).toLocaleDateString()}</span>
-                </span>
-              )}
-            </div>
-
-            {/* Action buttons — differ by role */}
-            <div className="mt-4 flex gap-2">
-              {isTeamMember ? (
-                // TEAM_MEMBER: status update only
-                <Button variant="secondary" onClick={() => setStatusTask(task)}>
-                  Update Status
-                </Button>
-              ) : (
-                // ADMIN / PROJECT_MANAGER: full edit + delete
-                <>
-                  <Button variant="secondary" onClick={() => openEdit(task)}>Update</Button>
-                  <Button variant="danger" onClick={() => setConfirmId(task.id)}>Delete</Button>
-                </>
-              )}
-            </div>
-          </Card>
-        ))}
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {filtered.map((task) => {
+          // Action Dropdown Items
+          const actionItems = [
+            {
+              label: "Update Status",
+              icon: <Clock className="h-3.5 w-3.5 text-slate-400" />,
+              onClick: () => setStatusTask(task),
+            },
+            ...(canManageTasks
+              ? [
+                  {
+                    label: "Edit Details",
+                    icon: <Edit className="h-3.5 w-3.5 text-slate-400" />,
+                    onClick: () => openEdit(task),
+                  },
+                  {
+                    label: "Delete Task",
+                    icon: <Trash className="h-3.5 w-3.5 text-red-400" />,
+                    variant: "danger" as const,
+                    onClick: () => setConfirmId(task.id),
+                  },
+                ]
+              : []),
+          ];
+ 
+          return (
+            <Card key={task.id} className="p-6 flex flex-col justify-between h-full hover:bg-slate-800/40">
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-base font-semibold text-white tracking-tight leading-snug">{task.title}</h3>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <StatusBadge status={task.status} />
+                    <Dropdown items={actionItems} />
+                  </div>
+                </div>
+ 
+                {task.description && (
+                  <p className="mt-3 text-sm text-slate-400 line-clamp-2 leading-relaxed">{task.description}</p>
+                )}
+              </div>
+ 
+              <div className="mt-5 pt-4 border-t border-slate-800/80 space-y-2.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-semibold uppercase tracking-wider">Priority</span>
+                  <PriorityBadge priority={task.priority} />
+                </div>
+                {task.project?.title && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-semibold uppercase tracking-wider">Project</span>
+                    <span className="font-semibold text-slate-200 flex items-center gap-1"><Folder className="h-3 w-3 text-slate-400" /> {task.project.title}</span>
+                  </div>
+                )}
+                {task.assignee?.name && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-semibold uppercase tracking-wider">Assignee</span>
+                    <span className="font-semibold text-slate-200 flex items-center gap-1"><User className="h-3 w-3 text-slate-400" /> {task.assignee.name}</span>
+                  </div>
+                )}
+                {task.dueDate && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-semibold uppercase tracking-wider">Due Date</span>
+                    <span className="font-semibold text-slate-200 flex items-center gap-1"><Calendar className="h-3 w-3 text-slate-400" /> {new Date(task.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+          );
+        })}
       </div>
-
+ 
       {!loading && filtered.length === 0 && (
-        <Card className="p-6 text-center text-sm text-slate-400">No tasks found.</Card>
+        <Card className="p-8 text-center text-sm text-slate-400 bg-slate-900/50">No tasks found matching current filters.</Card>
       )}
-
+ 
       {/* Create modal — ADMIN / PROJECT_MANAGER only */}
       <Modal open={createOpen} title="Create Task" onClose={() => setCreateOpen(false)}>
         <TaskForm
@@ -496,7 +489,7 @@ export default function TasksPage() {
           hasTeamMembers={buildMemberOptions(createMembers).length > 0 || loadingCreateMembers}
         />
       </Modal>
-
+ 
       {/* Full edit modal — ADMIN / PROJECT_MANAGER only */}
       <Modal open={editTask !== null} title="Update Task" onClose={() => setEditTask(null)}>
         <TaskForm
@@ -512,7 +505,7 @@ export default function TasksPage() {
           hasTeamMembers={buildMemberOptions(editMembers).length > 0 || loadingEditMembers}
         />
       </Modal>
-
+ 
       {/* Status-only modal — TEAM_MEMBER only */}
       <Modal
         open={statusTask !== null}
@@ -528,12 +521,12 @@ export default function TasksPage() {
           />
         )}
       </Modal>
-
+ 
       {/* Delete confirmation — ADMIN / PROJECT_MANAGER only */}
       <ConfirmDialog
         open={confirmId !== null}
         title="Delete task"
-        description="This will permanently remove the task."
+        description="Are you sure you want to permanently delete this task? This action cannot be undone."
         onCancel={() => setConfirmId(null)}
         onConfirm={handleDelete}
       />

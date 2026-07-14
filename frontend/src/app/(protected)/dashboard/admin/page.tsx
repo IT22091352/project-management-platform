@@ -1,115 +1,187 @@
 "use client";
-
-import { Card, Loader, PriorityBadge, SkeletonCard, StatusBadge } from "@/components/ui";
+ 
+import { Card, Loader, PriorityBadge, SkeletonCard, StatusBadge, Button } from "@/components/ui";
 import { useDashboard } from "@/hooks/use-dashboard";
-
-const STAT_LABELS: Record<string, string> = {
-  totalUsers: "Total Users",
-  totalProjects: "Total Projects",
-  totalTasks: "Total Tasks",
-  completedTasks: "Completed Tasks",
-  pendingTasks: "Pending Tasks",
+import Link from "next/link";
+import { Plus, CheckSquare, MessageSquare, User, Activity, Folder, Calendar, ArrowRight, BarChart3, Clock } from "lucide-react";
+ 
+const STAT_LABELS: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  totalUsers: { label: "Total Users", icon: <User className="h-5 w-5" />, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
+  totalProjects: { label: "Active Projects", icon: <Folder className="h-5 w-5" />, color: "text-purple-500 bg-purple-500/10 border-purple-500/20" },
+  totalTasks: { label: "Active Tasks", icon: <CheckSquare className="h-5 w-5" />, color: "text-amber-500 bg-amber-500/10 border-amber-500/20" },
+  completedTasks: { label: "Completed Tasks", icon: <Activity className="h-5 w-5" />, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
+  pendingTasks: { label: "Pending Tasks", icon: <Clock className="h-5 w-5" />, color: "text-slate-500 bg-slate-800 border-slate-700/50" },
 };
-
+ 
 export default function AdminDashboardPage() {
   const { data, loading, error } = useDashboard("/dashboard/admin");
-
+ 
   return (
     <section className="space-y-8">
-      <h1 className="text-3xl font-semibold text-white">Admin Dashboard</h1>
-
+      {/* Welcome Banner */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-white">Admin Dashboard</h1>
+        <p className="mt-1 text-sm text-slate-400">Platform overview, system load auditing, active workspace telemetry, and quick tasks.</p>
+      </div>
+ 
+      {/* Quick Actions Panel */}
+      <Card className="p-6">
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Quick Management Actions</h3>
+        <div className="flex flex-wrap gap-3.5">
+          <Link href="/projects">
+            <Button className="flex items-center gap-2 text-xs py-2 px-3.5">
+              <Plus className="h-4 w-4" /> Create Workspace Project
+            </Button>
+          </Link>
+          <Link href="/tasks">
+            <Button variant="secondary" className="flex items-center gap-2 text-xs py-2 px-3.5">
+              <CheckSquare className="h-4 w-4" /> Create Team Task
+            </Button>
+          </Link>
+          <Link href="/comments">
+            <Button variant="ghost" className="flex items-center gap-2 text-xs py-2 px-3.5 border border-slate-800 hover:border-slate-700">
+              <MessageSquare className="h-4 w-4" /> Collaborative Feed
+            </Button>
+          </Link>
+        </div>
+      </Card>
+ 
       {loading ? <Loader /> : null}
-      {error ? <Card className="p-4 text-rose-300">{error}</Card> : null}
-
+      {error ? <Card className="p-4 text-red-400 bg-red-950/20 border-red-900/50">{error}</Card> : null}
+ 
       {data ? (
         <>
-          {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {Object.entries(data.stats ?? {}).map(([key, value]) => (
-              <Card key={key} className="p-5">
-                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  {STAT_LABELS[key] ?? key}
-                </div>
-                <div className="mt-2 text-3xl font-semibold text-white">{String(value)}</div>
-              </Card>
-            ))}
+          {/* Metrics Summary Grid */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {Object.entries(data.stats ?? {}).map(([key, value]) => {
+              const meta = STAT_LABELS[key] ?? { label: key, icon: <Activity className="h-5 w-5" />, color: "text-slate-400" };
+              return (
+                <Card key={key} className="p-6 flex items-start gap-4">
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${meta.color}`}>
+                    {meta.icon}
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">{meta.label}</span>
+                    <span className="mt-1 text-3xl font-bold text-white block leading-none">{String(value)}</span>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
-
-          {/* Recent Projects */}
-          {(data.recentProjects?.length ?? 0) > 0 && (
-            <div>
-              <h2 className="mb-4 text-lg font-semibold text-white">Recent Projects</h2>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {data.recentProjects!.map((p) => (
-                  <Card key={p.id} className="p-4">
-                    <div className="font-semibold text-white">{p.title}</div>
-                    {p.manager?.name && (
-                      <div className="mt-1 text-xs text-slate-400">
-                        Manager: <span className="text-slate-200">{p.manager.name}</span>
-                      </div>
-                    )}
-                    <div className="mt-1 text-xs text-slate-500">
-                      {new Date(p.createdAt).toLocaleDateString()}
-                    </div>
-                  </Card>
+ 
+          {/* Charts & Timelines Grid */}
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* Visual Performance Chart Placeholder */}
+            <Card className="p-6 space-y-4 md:col-span-2">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-blue-500" />
+                  <h3 className="text-sm font-semibold text-slate-200">System Activity Telemetry</h3>
+                </div>
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Live 7 Days</span>
+              </div>
+              <div className="flex items-end gap-3 h-48 pt-4 justify-between max-w-md mx-auto">
+                {[
+                  { label: "Mon", val: "35%", height: "h-[35%]" },
+                  { label: "Tue", val: "50%", height: "h-[50%]" },
+                  { label: "Wed", val: "85%", height: "h-[85%]" },
+                  { label: "Thu", val: "65%", height: "h-[65%]" },
+                  { label: "Fri", val: "90%", height: "h-[90%]" },
+                  { label: "Sat", val: "25%", height: "h-[25%]" },
+                  { label: "Sun", val: "70%", height: "h-[70%]" },
+                ].map((bar, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+                    <div className={`${bar.height} w-full rounded-t bg-gradient-to-t from-blue-500/20 to-blue-500 hover:from-blue-400 hover:to-blue-400 transition-all duration-300 relative shadow-sm`} />
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{bar.label}</span>
+                  </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Recent Tasks */}
-          {(data.recentTasks?.length ?? 0) > 0 && (
-            <div>
-              <h2 className="mb-4 text-lg font-semibold text-white">Recent Tasks</h2>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {data.recentTasks!.map((t) => (
-                  <Card key={t.id} className="p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-semibold text-white leading-snug">{t.title}</div>
-                      <StatusBadge status={t.status} />
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <PriorityBadge priority={t.priority} />
-                    </div>
-                    {t.project?.title && (
-                      <div className="mt-2 text-xs text-slate-400">
-                        Project: <span className="text-slate-200">{t.project.title}</span>
-                      </div>
-                    )}
-                    {t.assignee?.name && (
-                      <div className="mt-0.5 text-xs text-slate-400">
-                        Assigned: <span className="text-slate-200">{t.assignee.name}</span>
-                      </div>
-                    )}
-                  </Card>
-                ))}
+            </Card>
+ 
+            {/* Recent Activity Feed / Comments Timeline */}
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 className="text-sm font-semibold text-slate-200">Activity Timeline</h3>
+                <Link href="/comments" className="text-[10px] font-bold text-blue-400 hover:underline uppercase tracking-wider flex items-center gap-0.5">
+                  Audits <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
-            </div>
-          )}
-
-          {/* Recent Comments */}
-          {(data.recentComments?.length ?? 0) > 0 && (
-            <div>
-              <h2 className="mb-4 text-lg font-semibold text-white">Recent Comments</h2>
-              <div className="space-y-3">
-                {data.recentComments!.map((c) => (
-                  <Card key={c.id} className="p-4">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-white text-sm">{c.user?.name}</span>
-                      <span className="text-slate-500">·</span>
-                      {c.task?.title && (
-                        <span className="text-xs text-slate-400">{c.task.title}</span>
-                      )}
-                      <span className="ml-auto text-xs text-slate-500">
-                        {new Date(c.createdAt).toLocaleString()}
-                      </span>
+              <div className="space-y-4 max-h-[190px] overflow-y-auto pr-1">
+                {(data.recentComments?.length ?? 0) > 0 ? (
+                  data.recentComments!.map((c) => (
+                    <div key={c.id} className="flex gap-3 text-xs leading-relaxed">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-800 text-[10px] font-bold text-slate-300 shrink-0">
+                        {c.user?.name?.slice(0, 2).toUpperCase() || "?"}
+                      </div>
+                      <div>
+                        <div>
+                          <span className="font-semibold text-slate-200">{c.user?.name}</span>
+                          <span className="text-slate-500 text-[10px] ml-1.5 font-medium">{new Date(c.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <p className="mt-1 text-slate-400 truncate max-w-[180px]">{c.comment}</p>
+                      </div>
                     </div>
-                    <p className="mt-2 text-sm text-slate-300 line-clamp-2">{c.comment}</p>
-                  </Card>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-500 text-center py-6">No recent communications found.</p>
+                )}
               </div>
-            </div>
-          )}
+            </Card>
+          </div>
+ 
+          {/* Recent Projects & Tasks Lists */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Recent Projects */}
+            {data.recentProjects && data.recentProjects.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-bold text-white">Recent Workspaces</h2>
+                  <Link href="/projects" className="text-xs font-semibold text-blue-400 hover:underline uppercase tracking-wider">All projects</Link>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {data.recentProjects.slice(0, 4).map((p) => (
+                    <Card key={p.id} className="p-5 flex flex-col justify-between hover:bg-slate-800/40">
+                      <div>
+                        <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Project</span>
+                        <h4 className="mt-1 font-semibold text-slate-200 leading-snug truncate">{p.title}</h4>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
+                        <span className="font-medium text-slate-300">{p.manager?.name || "Unassigned"}</span>
+                        <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-slate-500" /> {new Date(p.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+ 
+            {/* Recent Tasks */}
+            {data.recentTasks && data.recentTasks.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-bold text-white">Recent Issues & Tasks</h2>
+                  <Link href="/tasks" className="text-xs font-semibold text-blue-400 hover:underline uppercase tracking-wider">All tasks</Link>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {data.recentTasks.slice(0, 4).map((t) => (
+                    <Card key={t.id} className="p-5 flex flex-col justify-between hover:bg-slate-800/40">
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Task</span>
+                          <StatusBadge status={t.status} />
+                        </div>
+                        <h4 className="mt-1 font-semibold text-slate-200 leading-snug truncate">{t.title}</h4>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-455">
+                        <PriorityBadge priority={t.priority} />
+                        <span className="text-xs text-slate-400 font-semibold truncate max-w-[90px]">{t.assignee?.name || "Unassigned"}</span>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </>
       ) : null}
     </section>

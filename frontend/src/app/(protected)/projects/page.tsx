@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useProjects } from "@/hooks/use-projects";
@@ -19,24 +19,26 @@ import {
   SkeletonCard,
   Spinner,
   Textarea,
+  Dropdown,
+  StatusBadge,
   type SelectOption,
 } from "@/components/ui";
-
+import { Eye, Edit, Users, Trash, Calendar, Folder, User as UserIcon, CheckSquare, Clock, X, AlertCircle } from "lucide-react";
+ 
 type ProjectFormValues = {
   title: string;
   description: string;
   managerId: number | null;
   memberIds: number[];
 };
-
+ 
 const emptyForm = (): ProjectFormValues => ({
   title: "",
   description: "",
   managerId: null,
   memberIds: [],
 });
-
-// ── ProjectForm extracted to module level to prevent remounting on every render ──
+ 
 function ProjectForm({
   form,
   onChange,
@@ -48,6 +50,8 @@ function ProjectForm({
   memberOptions,
   loadingManagers,
   loadingMembers,
+  teamMembers,
+  status,
 }: {
   form: ProjectFormValues;
   onChange: (patch: Partial<ProjectFormValues>) => void;
@@ -59,91 +63,227 @@ function ProjectForm({
   memberOptions: SelectOption[];
   loadingManagers: boolean;
   loadingMembers: boolean;
+  teamMembers: any[];
+  status?: string;
 }) {
+  const [selectedMemberToAdd, setSelectedMemberToAdd] = useState<number | "">("");
   const canSubmit = form.title.trim().length > 0 && !submitting;
-  return (
-    <div className="space-y-4">
-      <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-400">Title *</label>
-        <Input
-          placeholder="Project title"
-          value={form.title}
-          onChange={(e) => onChange({ title: e.target.value })}
-        />
-      </div>
-      <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-400">Description</label>
-        <Textarea
-          placeholder="Project description"
-          rows={3}
-          value={form.description}
-          onChange={(e) => onChange({ description: e.target.value })}
-        />
-      </div>
-
-      {isAdmin && (
+ 
+  // Creation layout: Simple vertical form
+  if (isCreate) {
+    return (
+      <div className="space-y-4">
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Manager</label>
-          <CustomSelect
-            options={managerOptions}
-            value={form.managerId}
-            onChange={(v) => onChange({ managerId: Number(v) })}
-            placeholder="Select a manager…"
-            loading={loadingManagers}
+          <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Title *</label>
+          <Input
+            placeholder="Enter project title"
+            value={form.title}
+            onChange={(e) => onChange({ title: e.target.value })}
           />
         </div>
-      )}
-
-      <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-400">Team Members</label>
-        <MultiSelect
-          options={memberOptions}
-          value={form.memberIds}
-          onChange={(v) => onChange({ memberIds: v.map(Number) })}
-          placeholder="Select team members…"
-          loading={loadingMembers}
-        />
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Description</label>
+          <Textarea
+            placeholder="Describe this project..."
+            rows={3}
+            value={form.description}
+            onChange={(e) => onChange({ description: e.target.value })}
+          />
+        </div>
+ 
+        {isAdmin && (
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Manager</label>
+            <CustomSelect
+              options={managerOptions}
+              value={form.managerId}
+              onChange={(v) => onChange({ managerId: Number(v) })}
+              placeholder="Assign a manager"
+              loading={loadingManagers}
+            />
+          </div>
+        )}
+ 
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Team Members</label>
+          <MultiSelect
+            options={memberOptions}
+            value={form.memberIds}
+            onChange={(v) => onChange({ memberIds: v.map(Number) })}
+            placeholder="Assign team members"
+            loading={loadingMembers}
+          />
+        </div>
+ 
+        <div className="flex justify-end gap-3 pt-2">
+          <Button
+            type="button"
+            onClick={onSubmit}
+            disabled={!canSubmit}
+          >
+            {submitting ? <><Spinner className="h-4 w-4" /> Saving…</> : "Create Project"}
+          </Button>
+        </div>
       </div>
-
-      <div className="flex justify-end gap-3 pt-2">
-        <Button
-          type="button"
-          onClick={onSubmit}
-          disabled={!canSubmit}
-        >
-          {submitting ? <><Spinner className="h-4 w-4" /> Saving…</> : isCreate ? "Create Project" : "Save Changes"}
-        </Button>
+    );
+  }
+ 
+  // Editing Layout: Advanced 2-column project parameters & membership workspace
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Left Column: Project Information */}
+      <div className="space-y-4">
+        <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">Project Information</h4>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Title *</label>
+          <Input
+            placeholder="Enter project title"
+            value={form.title}
+            onChange={(e) => onChange({ title: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Description</label>
+          <Textarea
+            placeholder="Describe this project..."
+            rows={4}
+            value={form.description}
+            onChange={(e) => onChange({ description: e.target.value })}
+          />
+        </div>
+ 
+        {isAdmin && (
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Manager</label>
+            <CustomSelect
+              options={managerOptions}
+              value={form.managerId}
+              onChange={(v) => onChange({ managerId: Number(v) })}
+              placeholder="Assign a manager"
+              loading={loadingManagers}
+            />
+          </div>
+        )}
+ 
+        {status && (
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Status</label>
+            <StatusBadge status={status} />
+          </div>
+        )}
+      </div>
+ 
+      {/* Right Column: Team Members management */}
+      <div className="space-y-4 flex flex-col justify-between h-full">
+        <div className="space-y-4">
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">Team Members</h4>
+          
+          {/* Search/Add User select input */}
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Add Team Member</label>
+            <div className="flex gap-2">
+              <CustomSelect
+                options={memberOptions.filter(opt => !form.memberIds.includes(Number(opt.value)))}
+                value={selectedMemberToAdd}
+                onChange={(v) => setSelectedMemberToAdd(Number(v))}
+                placeholder="Select user to add"
+                loading={loadingMembers}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  if (selectedMemberToAdd !== "") {
+                    onChange({ memberIds: [...form.memberIds, Number(selectedMemberToAdd)] });
+                    setSelectedMemberToAdd("");
+                  }
+                }}
+                disabled={selectedMemberToAdd === ""}
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+ 
+          {/* Current Members List */}
+          <div className="space-y-2.5">
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Current Members ({form.memberIds.length})</label>
+            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+              {form.memberIds.length > 0 ? (
+                form.memberIds.map(id => {
+                  const matched = teamMembers.find(m => m.id === id);
+                  if (!matched) return null;
+                  return (
+                    <div key={id} className="flex items-center justify-between p-2 rounded-xl border border-slate-800 bg-slate-950/40">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-850 border border-slate-800 text-[10px] font-bold text-slate-300 shrink-0">
+                          {matched.name.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-xs font-semibold text-slate-200 block truncate leading-tight">{matched.name}</span>
+                          <span className="text-[9px] text-slate-500 block truncate">{matched.email}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <RoleBadge role={matched.role} />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onChange({ memberIds: form.memberIds.filter(mid => mid !== id) });
+                          }}
+                          className="text-slate-500 hover:text-red-400 p-1.5 transition rounded-lg hover:bg-slate-800"
+                          title="Remove member"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-xs text-slate-500 italic py-2">No team members assigned.</p>
+              )}
+            </div>
+          </div>
+        </div>
+ 
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+          <Button type="button" onClick={onSubmit} disabled={!canSubmit}>
+            {submitting ? <><Spinner className="h-4 w-4" /> Saving…</> : "Save Changes"}
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
-
+ 
 export default function ProjectsPage() {
   const { data, loading, error, refetch } = useProjects();
   const { user } = useAuthContext();
   const isAdmin = user?.role === "ADMIN";
-  // TEAM_MEMBER has read-only access to projects
   const canManageProjects = user?.role === "ADMIN" || user?.role === "PROJECT_MANAGER";
-
-  // Role-filtered user lists for dropdowns
+ 
   const { data: managers, loading: loadingManagers } = useUsers(isAdmin ? "PROJECT_MANAGER" : undefined);
   const { data: teamMembers, loading: loadingMembers } = useUsers(isAdmin || user?.role === "PROJECT_MANAGER" ? "TEAM_MEMBER" : undefined);
-
+ 
   const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [editProject, setEditProject] = useState<(typeof data)[0] | null>(null);
   const [loadingEdit, setLoadingEdit] = useState(false);
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
+ 
+  // View Details Modal State
+  const [viewProject, setViewProject] = useState<any | null>(null);
+  const [loadingView, setLoadingView] = useState(false);
+ 
   const [createForm, setCreateForm] = useState<ProjectFormValues>(emptyForm());
   const [editForm, setEditForm] = useState<ProjectFormValues>(emptyForm());
-
-  // Derived dropdown options
+ 
   const managerOptions: SelectOption[] = managers.map((m) => ({ value: m.id, label: m.name }));
   const memberOptions: SelectOption[] = teamMembers.map((m) => ({ value: m.id, label: m.name }));
-
-  // Search: by name, description, manager
+ 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
     return data.filter(
@@ -153,8 +293,7 @@ export default function ProjectsPage() {
         (p.manager?.name ?? "").toLowerCase().includes(q)
     );
   }, [data, query]);
-
-  // ── Create ─────────────────────────────────────────────────────────────
+ 
   const handleCreate = async () => {
     if (!createForm.title.trim()) return;
     setSubmitting(true);
@@ -165,7 +304,7 @@ export default function ProjectsPage() {
         memberIds: createForm.memberIds,
       };
       if (isAdmin && createForm.managerId) payload.managerId = createForm.managerId;
-
+ 
       await api.post("/projects", payload);
       toast.success("Project created");
       setCreateForm(emptyForm());
@@ -177,11 +316,7 @@ export default function ProjectsPage() {
       setSubmitting(false);
     }
   };
-
-  // ── Update ─────────────────────────────────────────────────────────────
-  // Fetch the full project (includes members) before opening the edit modal.
-  // The list endpoint uses a lean select that omits members — we need the
-  // detail endpoint so memberIds are correctly pre-populated.
+ 
   const openEdit = async (project: (typeof data)[0]) => {
     setLoadingEdit(true);
     try {
@@ -205,7 +340,19 @@ export default function ProjectsPage() {
       setLoadingEdit(false);
     }
   };
-
+ 
+  const handleViewDetails = async (project: (typeof data)[0]) => {
+    setLoadingView(true);
+    try {
+      const res = await api.get(`/projects/${project.id}`);
+      setViewProject(res.data.data.project);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setLoadingView(false);
+    }
+  };
+ 
   const handleUpdate = async () => {
     if (!editProject || !editForm.title.trim()) return;
     setSubmitting(true);
@@ -216,17 +363,13 @@ export default function ProjectsPage() {
         memberIds: editForm.memberIds,
       };
       if (isAdmin && editForm.managerId) payload.managerId = editForm.managerId;
-
-      console.log("[ProjectUpdate] payload:", JSON.stringify(payload, null, 2));
-
+ 
       await api.put(`/projects/${editProject.id}`, payload);
-
-      // Only sync members when there is at least one id to send.
-      // assignMembers endpoint rejects an empty array with 400.
+ 
       if (editForm.memberIds.length > 0) {
         await api.post(`/projects/${editProject.id}/members`, { memberIds: editForm.memberIds });
       }
-
+ 
       toast.success("Project updated");
       setEditProject(null);
       await refetch();
@@ -236,8 +379,7 @@ export default function ProjectsPage() {
       setSubmitting(false);
     }
   };
-
-  // ── Delete ─────────────────────────────────────────────────────────────
+ 
   const handleDelete = async () => {
     if (!confirmId) return;
     try {
@@ -249,78 +391,106 @@ export default function ProjectsPage() {
       toast.error(getErrorMessage(err));
     }
   };
-
+ 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-white">Projects</h1>
-          <p className="mt-1 text-sm text-slate-400">Create, update, search, and manage project membership.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Projects</h1>
+          <p className="mt-1 text-sm text-slate-400">Manage and monitor project workspaces, task distributions, and memberships.</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, description, manager…"
-              className="min-w-64"
-            />
-            {canManageProjects && (
-              <Button onClick={() => setCreateOpen(true)}>Create Project</Button>
-            )}
-          </div>
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search projects..."
+            className="min-w-64"
+          />
+          {canManageProjects && (
+            <Button onClick={() => setCreateOpen(true)}>Create Project</Button>
+          )}
+        </div>
       </div>
-
+ 
       {loading ? (
-        <div className="grid gap-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => <SkeletonCard key={i} lines={4} />)}
         </div>
       ) : null}
-      {error ? <Card className="p-4 text-rose-300">{error}</Card> : null}
-
+      {error ? <Card className="p-4 text-red-400 bg-red-950/20 border-red-900/50">{error}</Card> : null}
+ 
       {/* Project cards */}
-      <div className="grid gap-4">
-        {filtered.map((project) => (
-          <Card key={project.id} className="p-5">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div className="flex-1 min-w-0">
-                <h3 className="text-xl font-semibold text-white truncate">{project.title}</h3>
-                <p className="mt-2 text-sm text-slate-300">{project.description || "No description"}</p>
-                <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                  {project.manager?.name && (
-                    <span className="flex items-center gap-1.5">
-                      <span className="text-slate-500">Manager:</span>
-                      <span className="font-medium text-slate-200">{project.manager.name}</span>
-                    </span>
-                  )}
-                  {project._count?.tasks !== undefined && (
-                    <span className="flex items-center gap-1.5">
-                      <span className="text-slate-500">Tasks:</span>
-                      <span className="font-medium text-slate-200">{project._count.tasks}</span>
-                    </span>
-                  )}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {filtered.map((project) => {
+          const taskCount = project._count?.tasks ?? 0;
+          const status = taskCount > 0 ? "IN_PROGRESS" : "PENDING";
+          const updatedAt = (project as any).updatedAt || project.createdAt;
+ 
+          // Dropdown Action Items
+          const actionItems = [
+            {
+              label: "View Details",
+              icon: <Eye className="h-3.5 w-3.5 text-slate-400" />,
+              onClick: () => handleViewDetails(project),
+            },
+            ...(canManageProjects
+              ? [
+                  {
+                    label: "Edit Project",
+                    icon: <Edit className="h-3.5 w-3.5 text-slate-400" />,
+                    onClick: () => openEdit(project),
+                  },
+                ]
+              : []),
+            ...(isAdmin || project.createdBy === user?.id
+              ? [
+                  {
+                    label: "Delete Project",
+                    icon: <Trash className="h-3.5 w-3.5 text-red-400" />,
+                    variant: "danger" as const,
+                    onClick: () => setConfirmId(project.id),
+                  },
+                ]
+              : []),
+          ];
+ 
+          return (
+            <Card key={project.id} className="p-6 flex flex-col justify-between h-full hover:bg-slate-800/40">
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Folder className="h-5 w-5 text-blue-500 shrink-0" />
+                    <h3 className="text-lg font-semibold text-white tracking-tight leading-none truncate">{project.title}</h3>
+                  </div>
+                  <Dropdown items={actionItems} />
+                </div>
+                <p className="mt-3 text-sm text-slate-400 line-clamp-3 leading-relaxed min-h-[60px]">{project.description || "No description provided."}</p>
+              </div>
+ 
+              <div className="mt-6 pt-5 border-t border-slate-800/80 space-y-3.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-semibold uppercase tracking-wider">Manager</span>
+                  <span className="font-semibold text-slate-200">{project.manager?.name || "Unassigned"}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-semibold uppercase tracking-wider">Tasks</span>
+                  <span className="font-semibold text-slate-200">{taskCount} active</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-semibold uppercase tracking-wider">Status</span>
+                  <StatusBadge status={status} />
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
+                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Updated</span>
+                  <span>{updatedAt ? new Date(updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "-"}</span>
                 </div>
               </div>
-              {canManageProjects && (
-                <div className="flex shrink-0 gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() => openEdit(project)}
-                    disabled={loadingEdit}
-                  >
-                    {loadingEdit ? <><Spinner className="h-4 w-4" /> Loading…</> : "Update"}
-                  </Button>
-                  {/* Delete is only shown to ADMIN or the project's original creator */}
-                  {(isAdmin || project.createdBy === user?.id) && (
-                    <Button variant="danger" onClick={() => setConfirmId(project.id)}>Delete</Button>
-                  )}
-                </div>
-              )}
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
-
+ 
       {/* Create modal */}
       <Modal open={createOpen} title="Create Project" onClose={() => setCreateOpen(false)}>
         <ProjectForm
@@ -334,9 +504,10 @@ export default function ProjectsPage() {
           memberOptions={memberOptions}
           loadingManagers={loadingManagers}
           loadingMembers={loadingMembers}
+          teamMembers={teamMembers}
         />
       </Modal>
-
+ 
       {/* Edit modal */}
       <Modal open={editProject !== null} title="Update Project" onClose={() => setEditProject(null)}>
         <ProjectForm
@@ -350,13 +521,70 @@ export default function ProjectsPage() {
           memberOptions={memberOptions}
           loadingManagers={loadingManagers}
           loadingMembers={loadingMembers}
+          teamMembers={teamMembers}
+          status={editProject ? (editProject._count?.tasks ?? 0) > 0 ? "IN_PROGRESS" : "PENDING" : undefined}
         />
       </Modal>
-
+ 
+      {/* View Details Modal */}
+      <Modal open={viewProject !== null} title="Project Details" onClose={() => setViewProject(null)}>
+        {viewProject && (
+          <div className="space-y-6">
+            <div>
+              <h4 className="text-xl font-bold text-white">{viewProject.title}</h4>
+              <p className="mt-2 text-sm text-slate-400 leading-relaxed">{viewProject.description || "No description provided."}</p>
+            </div>
+            <div className="grid gap-4 border-t border-slate-800 pt-5 sm:grid-cols-2 text-sm">
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Manager</span>
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-full bg-blue-500/10 text-xs font-bold text-blue-400 flex items-center justify-center">
+                    {viewProject.manager?.name?.slice(0,2).toUpperCase()}
+                  </div>
+                  <span className="font-semibold text-slate-200">{viewProject.manager?.name || "None"}</span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Tasks</span>
+                <span className="font-semibold text-slate-200 flex items-center gap-1.5"><CheckSquare className="h-4 w-4 text-slate-400" /> {viewProject._count?.tasks ?? 0} total tasks</span>
+              </div>
+            </div>
+ 
+            <div className="border-t border-slate-800 pt-5">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2.5">Team Members ({viewProject.members?.length ?? 0})</span>
+              {viewProject.members && viewProject.members.length > 0 ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {viewProject.members.map((member: any) => (
+                    <div key={member.id} className="flex items-center justify-between p-2.5 rounded-xl border border-slate-800 bg-slate-950/40">
+                      <div className="flex items-center gap-2">
+                        <div className="h-7 w-7 rounded-full bg-slate-800 text-xs font-bold text-slate-300 flex items-center justify-center">
+                          {member.user?.name?.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <span className="text-sm font-semibold text-slate-200 block leading-tight">{member.user?.name}</span>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">{member.user?.email}</span>
+                        </div>
+                      </div>
+                      <RoleBadge role={member.user?.role} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">No team members assigned to this project.</p>
+              )}
+            </div>
+ 
+            <div className="flex justify-end pt-2 border-t border-slate-800">
+              <Button variant="secondary" onClick={() => setViewProject(null)}>Close</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+ 
       <ConfirmDialog
         open={confirmId !== null}
         title="Delete project"
-        description="This will remove the project and all its tasks."
+        description="Are you sure you want to delete this project? This will permanently remove the project workspace and all of its associated tasks. This action cannot be undone."
         onCancel={() => setConfirmId(null)}
         onConfirm={handleDelete}
       />

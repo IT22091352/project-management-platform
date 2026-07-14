@@ -1,71 +1,29 @@
 "use client";
-
+ 
 import { useMemo, useState } from "react";
 import { useUsers } from "@/hooks/use-users";
 import { useAuthContext } from "@/context/auth-context";
 import { api, getErrorMessage } from "@/lib/api";
-import { Button, Card, CustomSelect, Input, RoleBadge, SkeletonCard, Spinner, type SelectOption } from "@/components/ui";
+import { Button, Card, CustomSelect, Input, RoleBadge, SkeletonCard, Spinner, StatusBadge, Dropdown, ConfirmDialog, type SelectOption } from "@/components/ui";
 import toast from "react-hot-toast";
-
+import { Trash, ShieldAlert, UserPlus, Search, Filter, Shield } from "lucide-react";
+ 
 const ROLE_FILTER_OPTIONS: SelectOption[] = [
   { value: "", label: "All Roles" },
   { value: "ADMIN", label: "Admin" },
   { value: "PROJECT_MANAGER", label: "Project Manager" },
   { value: "TEAM_MEMBER", label: "Team Member" },
 ];
-
-// ── Inline confirmation modal (re-uses theme, does not import ConfirmDialog
-//    so we can customise the description copy per requirements) ────────────────
-function DeleteConfirmModal({
-  open,
-  onCancel,
-  onConfirm,
-  deleting,
-}: {
-  open: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-  deleting: boolean;
-}) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl shadow-black/50">
-        <h3 className="text-lg font-semibold text-white">Delete User</h3>
-        <p className="mt-3 text-sm leading-6 text-slate-300">
-          Are you sure you want to delete this user?
-          <br />
-          <span className="text-rose-400">This action cannot be undone.</span>
-        </p>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button variant="ghost" onClick={onCancel} disabled={deleting}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={deleting}>
-            {deleting ? (
-              <>
-                <Spinner className="h-4 w-4" />
-                Deleting…
-              </>
-            ) : (
-              "Delete"
-            )}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
+ 
 export default function UsersPage() {
   const { data, loading, error, refetch } = useUsers();
   const { user: currentUser } = useAuthContext();
-
+ 
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-
+ 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
     return data.filter((u) => {
@@ -77,7 +35,7 @@ export default function UsersPage() {
       return matchText && matchRole;
     });
   }, [data, query, roleFilter]);
-
+ 
   const handleDelete = async () => {
     if (!confirmId) return;
     setDeleting(true);
@@ -99,20 +57,20 @@ export default function UsersPage() {
       setDeleting(false);
     }
   };
-
+ 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-white">Users</h1>
-          <p className="mt-1 text-sm text-slate-400">Manage platform users and their roles.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Users</h1>
+          <p className="mt-1 text-sm text-slate-400">View platform members, assign directory access, and audit role accounts.</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, email, role…"
+            placeholder="Search users..."
             className="min-w-56"
           />
           <CustomSelect
@@ -124,69 +82,101 @@ export default function UsersPage() {
           />
         </div>
       </div>
-
+ 
       {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} lines={3} />)}
-        </div>
+        <Card className="p-6">
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-10 bg-slate-800 animate-pulse rounded-xl" />
+            ))}
+          </div>
+        </Card>
       ) : null}
-      {error ? <Card className="p-4 text-rose-300">{error}</Card> : null}
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((user) => {
-          const isSelf = currentUser?.id === user.id;
-          return (
-            <Card key={user.id} className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-lg font-semibold text-white">
-                    {user.name}
-                    {isSelf && (
-                      <span className="ml-2 text-xs font-normal text-blue-400">(you)</span>
-                    )}
-                  </div>
-                  <div className="mt-0.5 truncate text-sm text-slate-400">{user.email}</div>
-                </div>
-                <RoleBadge role={user.role} />
-              </div>
-              <div className="mt-4 flex justify-end">
-                {isSelf ? (
-                  // Current user — show a disabled "Current User" badge instead of Delete
-                  <span className="inline-flex cursor-not-allowed items-center rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-500 opacity-60 select-none">
-                    Current User
-                  </span>
-                ) : (
-                  <Button
-                    variant="danger"
-                    onClick={() => setConfirmId(user.id)}
-                    disabled={deleting && confirmId === user.id}
-                  >
-                    {deleting && confirmId === user.id ? (
-                      <>
-                        <Spinner className="h-4 w-4" />
-                        Deleting…
-                      </>
-                    ) : (
-                      "Delete"
-                    )}
-                  </Button>
-                )}
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-
-      {!loading && filtered.length === 0 && (
-        <Card className="p-6 text-center text-sm text-slate-400">No users match your search.</Card>
+      {error ? <Card className="p-4 text-red-400 bg-red-950/20 border-red-900/50">{error}</Card> : null}
+ 
+      {/* Modern SaaS Users Table */}
+      {!loading && filtered.length > 0 && (
+        <div className="w-full overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900 shadow-md">
+          <table className="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-slate-800 bg-slate-950/40 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <th className="px-6 py-4">User</th>
+                <th className="px-6 py-4">Email</th>
+                <th className="px-6 py-4">Role</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {filtered.map((user) => {
+                const isSelf = currentUser?.id === user.id;
+                const initials = user.name.slice(0, 2).toUpperCase();
+ 
+                const actionItems = isSelf
+                  ? []
+                  : [
+                      {
+                        label: "Delete User",
+                        icon: <Trash className="h-3.5 w-3.5 text-red-400" />,
+                        variant: "danger" as const,
+                        onClick: () => setConfirmId(user.id),
+                      },
+                    ];
+ 
+                return (
+                  <tr key={user.id} className="hover:bg-slate-850/30 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-xs font-bold text-blue-400 shrink-0">
+                          {initials}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-white flex items-center gap-1.5 leading-tight">
+                            {user.name}
+                            {isSelf && (
+                              <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-400 uppercase">
+                                You
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-slate-300">
+                      {user.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <RoleBadge role={user.role} />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <StatusBadge status="COMPLETED" /> {/* Mock active status as "Completed" (green) */}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      {!isSelf ? (
+                        <Dropdown items={actionItems} />
+                      ) : (
+                        <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider mr-2">Owner</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
-
-      {/* Custom confirmation modal */}
-      <DeleteConfirmModal
+ 
+      {!loading && filtered.length === 0 && (
+        <Card className="p-8 text-center text-sm text-slate-400 bg-slate-900/50">No platform users match your filters.</Card>
+      )}
+ 
+      {/* Delete Confirmation Modal */}
+      <ConfirmDialog
         open={confirmId !== null}
+        title="Delete User Account"
+        description="Are you sure you want to permanently delete this user? All workspace permissions will be immediately revoked. This action is final and cannot be undone."
         onCancel={() => setConfirmId(null)}
         onConfirm={handleDelete}
-        deleting={deleting}
       />
     </section>
   );

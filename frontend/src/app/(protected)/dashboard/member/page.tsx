@@ -1,79 +1,152 @@
 "use client";
-
-import { Card, Loader, PriorityBadge, StatusBadge } from "@/components/ui";
+ 
+import { Card, Loader, PriorityBadge, StatusBadge, Button } from "@/components/ui";
 import { useDashboard } from "@/hooks/use-dashboard";
-
-const STAT_LABELS: Record<string, string> = {
-  assignedTasks: "Assigned Tasks",
-  completed: "Completed",
-  pending: "Pending",
+import Link from "next/link";
+import { CheckSquare, MessageSquare, Activity, Calendar, ArrowRight, BarChart3, Clock, User } from "lucide-react";
+ 
+const STAT_LABELS: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  assignedTasks: { label: "My Assigned Tasks", icon: <User className="h-5 w-5" />, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
+  completed: { label: "Tasks Completed", icon: <Activity className="h-5 w-5" />, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
+  pending: { label: "Tasks Pending", icon: <Clock className="h-5 w-5" />, color: "text-amber-500 bg-amber-500/10 border-amber-500/20" },
 };
-
+ 
 export default function MemberDashboardPage() {
   const { data, loading, error } = useDashboard("/dashboard/member");
-
+ 
   return (
     <section className="space-y-8">
-      <h1 className="text-3xl font-semibold text-white">My Dashboard</h1>
-
+      {/* Welcome Banner */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-white">My Dashboard</h1>
+        <p className="mt-1 text-sm text-slate-400">View personal task queues, monitor milestone deadlines, and review comments feed.</p>
+      </div>
+ 
+      {/* Quick Actions Panel */}
+      <Card className="p-6">
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Quick Shortcuts</h3>
+        <div className="flex flex-wrap gap-3.5">
+          <Link href="/tasks">
+            <Button className="flex items-center gap-2 text-xs py-2 px-3.5">
+              <CheckSquare className="h-4 w-4" /> My Task Board
+            </Button>
+          </Link>
+          <Link href="/comments">
+            <Button variant="secondary" className="flex items-center gap-2 text-xs py-2 px-3.5">
+              <MessageSquare className="h-4 w-4" /> Activity Feed
+            </Button>
+          </Link>
+        </div>
+      </Card>
+ 
       {loading ? <Loader /> : null}
-      {error ? <Card className="p-4 text-rose-300">{error}</Card> : null}
-
+      {error ? <Card className="p-4 text-red-400 bg-red-950/20 border-red-900/50">{error}</Card> : null}
+ 
       {data ? (
         <>
-          {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-3">
-            {Object.entries(data.stats ?? {}).map(([key, value]) => (
-              <Card key={key} className="p-5">
-                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  {STAT_LABELS[key] ?? key}
-                </div>
-                <div className="mt-2 text-3xl font-semibold text-white">{String(value)}</div>
-              </Card>
-            ))}
+          {/* Metrics Summary Grid */}
+          <div className="grid gap-6 sm:grid-cols-3">
+            {Object.entries(data.stats ?? {}).map(([key, value]) => {
+              const meta = STAT_LABELS[key] ?? { label: key, icon: <Activity className="h-5 w-5" />, color: "text-slate-400" };
+              return (
+                <Card key={key} className="p-6 flex items-start gap-4">
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${meta.color}`}>
+                    {meta.icon}
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">{meta.label}</span>
+                    <span className="mt-1 text-3xl font-bold text-white block leading-none">{String(value)}</span>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
-
-          {/* Recent Tasks */}
-          {(data.recentTasks?.length ?? 0) > 0 && (
-            <div>
-              <h2 className="mb-4 text-lg font-semibold text-white">Recent Tasks</h2>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {data.recentTasks!.map((t) => (
-                  <Card key={t.id} className="p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-semibold text-white leading-snug">{t.title}</div>
-                      <StatusBadge status={t.status} />
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <PriorityBadge priority={t.priority} />
-                    </div>
-                    {t.project?.title && (
-                      <div className="mt-2 text-xs text-slate-400">
-                        Project: <span className="text-slate-200">{t.project.title}</span>
-                      </div>
-                    )}
-                  </Card>
+ 
+          {/* Charts & Timelines Grid */}
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* Visual Performance Chart Placeholder */}
+            <Card className="p-6 space-y-4 md:col-span-2">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-blue-500" />
+                  <h3 className="text-sm font-semibold text-slate-200">Completion Velocity</h3>
+                </div>
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Weekly Status</span>
+              </div>
+              <div className="flex items-end gap-3 h-48 pt-4 justify-between max-w-md mx-auto">
+                {[
+                  { label: "Mon", height: "h-[30%]" },
+                  { label: "Tue", height: "h-[50%]" },
+                  { label: "Wed", height: "h-[70%]" },
+                  { label: "Thu", height: "h-[40%]" },
+                  { label: "Fri", height: "h-[85%]" },
+                  { label: "Sat", height: "h-[30%]" },
+                  { label: "Sun", height: "h-[55%]" },
+                ].map((bar, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+                    <div className={`${bar.height} w-full rounded-t bg-gradient-to-t from-blue-500/20 to-blue-500 hover:from-blue-400 hover:to-blue-400 transition-all duration-300 relative shadow-sm`} />
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{bar.label}</span>
+                  </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Recent Comments */}
-          {(data.recentComments?.length ?? 0) > 0 && (
-            <div>
-              <h2 className="mb-4 text-lg font-semibold text-white">My Recent Comments</h2>
-              <div className="space-y-3">
-                {data.recentComments!.map((c) => (
-                  <Card key={c.id} className="p-4">
-                    <div className="flex items-center gap-2">
-                      {c.task?.title && (
-                        <span className="text-xs text-slate-400">{c.task.title}</span>
-                      )}
-                      <span className="ml-auto text-xs text-slate-500">
-                        {new Date(c.createdAt).toLocaleString()}
-                      </span>
+            </Card>
+ 
+            {/* Recent Activity Feed / Comments Timeline */}
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 className="text-sm font-semibold text-slate-200">My Activity Feed</h3>
+                <Link href="/comments" className="text-[10px] font-bold text-blue-400 hover:underline uppercase tracking-wider flex items-center gap-0.5">
+                  View feed <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <div className="space-y-4 max-h-[190px] overflow-y-auto pr-1">
+                {(data.recentComments?.length ?? 0) > 0 ? (
+                  data.recentComments!.map((c) => (
+                    <div key={c.id} className="flex gap-3 text-xs leading-relaxed">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-850 border border-slate-800 text-[10px] font-bold text-slate-300 shrink-0">
+                        Task
+                      </div>
+                      <div>
+                        <div>
+                          {c.task?.title && (
+                            <span className="font-semibold text-slate-300 truncate max-w-[150px] inline-block align-bottom">{c.task.title}</span>
+                          )}
+                          <span className="text-slate-500 text-[10px] ml-1.5 font-medium">{new Date(c.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <p className="mt-1 text-slate-400 truncate max-w-[180px]">{c.comment}</p>
+                      </div>
                     </div>
-                    <p className="mt-2 text-sm text-slate-300 line-clamp-2">{c.comment}</p>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-500 text-center py-6">No recent comments logged.</p>
+                )}
+              </div>
+            </Card>
+          </div>
+ 
+          {/* Recent Tasks List */}
+          {data.recentTasks && data.recentTasks.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-white">Assigned Issues & Tasks</h2>
+                <Link href="/tasks" className="text-xs font-semibold text-blue-400 hover:underline uppercase tracking-wider">All tasks</Link>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {data.recentTasks.slice(0, 6).map((t) => (
+                  <Card key={t.id} className="p-6 flex flex-col justify-between hover:bg-slate-800/40">
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Task ID: #{t.id}</span>
+                        <StatusBadge status={t.status} />
+                      </div>
+                      <h4 className="mt-2 font-semibold text-slate-200 leading-snug truncate">{t.title}</h4>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
+                      <PriorityBadge priority={t.priority} />
+                      {t.project?.title && (
+                        <span className="text-slate-500 font-medium truncate max-w-[150px]">Project: <span className="text-slate-300 font-semibold">{t.project.title}</span></span>
+                      )}
+                    </div>
                   </Card>
                 ))}
               </div>
