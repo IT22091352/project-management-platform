@@ -17,8 +17,39 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Project Management Platform",
-  description: "Project and team task management dashboard",
+  title: "Operations Hub",
+  description: "Modern Project and Team Task Management Platform",
+  applicationName: "Operations Hub",
+  metadataBase: new URL("https://project-management-cyphlab.vercel.app"),
+  icons: {
+    icon: "/icon.png",
+  },
+  openGraph: {
+    title: "Operations Hub",
+    description: "Modern Project and Team Task Management Platform",
+    url: "https://project-management-cyphlab.vercel.app",
+    siteName: "Operations Hub",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/opengraph.png",
+        width: 1200,
+        height: 630,
+        alt: "Operations Hub Dashboard Preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Operations Hub",
+    description: "Modern Project and Team Task Management Platform",
+    images: ["/opengraph.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
