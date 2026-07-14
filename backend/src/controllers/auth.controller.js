@@ -35,6 +35,7 @@ const login = asyncHandler(async (req, res) => {
   return sendSuccess(res, 200, "Login successful", result);
 });
 
+
 const profile = asyncHandler(async (req, res) => {
   const user = await authService.profile(req.user.id);
 
