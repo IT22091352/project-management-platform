@@ -23,7 +23,7 @@ export function Button({
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 min-h-[44px] text-sm font-semibold whitespace-nowrap transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
     >
       {children}
     </button>
@@ -230,10 +230,10 @@ export function CustomSelect({ options, value, onChange, placeholder = "Select�
                   <button
                     type="button"
                     onClick={() => { onChange(option.value); setOpen(false); }}
-                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm text-left transition hover:bg-slate-850 ${String(option.value) === String(value) ? "text-blue-400 bg-blue-500/5" : "text-slate-200"}`}
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm text-left transition hover:bg-slate-850 min-w-0 ${String(option.value) === String(value) ? "text-blue-400 bg-blue-500/5" : "text-slate-200"}`}
                   >
                     {String(option.value) === String(value) && <Check className="h-3.5 w-3.5 shrink-0" />}
-                    <span className={String(option.value) === String(value) ? "" : "pl-[18px]"}>{option.label}</span>
+                    <span className={`truncate ${String(option.value) === String(value) ? "" : "pl-[18px]"}`} title={option.label}>{option.label}</span>
                   </button>
                 </li>
               ))
@@ -294,7 +294,7 @@ export function MultiSelect({ options, value, onChange, placeholder = "Select…
             <span className="text-slate-500">Loading…</span>
           ) : selectedLabels.length > 0 ? (
             selectedLabels.map((label) => (
-              <span key={label} className="inline-flex items-center gap-1 rounded bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 text-xs text-blue-400">
+              <span key={label} className="inline-flex items-center gap-1 rounded bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 text-xs text-blue-400 max-w-[120px] truncate" title={label}>
                 {label}
               </span>
             ))
@@ -324,12 +324,12 @@ export function MultiSelect({ options, value, onChange, placeholder = "Select…
                     <button
                       type="button"
                       onClick={() => toggle(option.value)}
-                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm text-left transition hover:bg-slate-850 ${checked ? "text-blue-400" : "text-slate-200"}`}
+                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm text-left transition hover:bg-slate-850 min-w-0 ${checked ? "text-blue-400" : "text-slate-200"}`}
                     >
                       <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${checked ? "border-blue-500 bg-blue-500/20" : "border-slate-800 bg-slate-950"}`}>
                         {checked && <Check className="h-2.5 w-2.5 text-blue-400" />}
                       </span>
-                      {option.label}
+                      <span className="truncate" title={option.label}>{option.label}</span>
                     </button>
                   </li>
                 );
@@ -346,11 +346,15 @@ export function MultiSelect({ options, value, onChange, placeholder = "Select…
 export function Modal({ open, title, children, onClose }: React.PropsWithChildren<{ open: boolean; title: string; onClose: () => void }>) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-sm">
-      <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm overflow-y-auto">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-4 md:p-6 shadow-2xl max-h-[90vh] overflow-y-auto my-auto"
+      >
         <div className="mb-4 flex items-center justify-between gap-4">
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-white"><X className="h-5 w-5" /></button>
+          <h3 className="text-base md:text-lg font-semibold text-white truncate">{title}</h3>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-white shrink-0"><X className="h-5 w-5" /></button>
         </div>
         {children}
       </motion.div>
@@ -362,16 +366,16 @@ export function Modal({ open, title, children, onClose }: React.PropsWithChildre
 export function ConfirmDialog({ open, title, description, onCancel, onConfirm }: { open: boolean; title: string; description: string; onCancel: () => void; onConfirm: () => void }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-5 md:p-6 shadow-2xl">
         <div className="mb-3 flex items-center gap-3 text-white">
-          <Shield className="h-5 w-5 text-blue-500" />
-          <h3 className="text-lg font-semibold">{title}</h3>
+          <Shield className="h-5 w-5 text-blue-500 shrink-0" />
+          <h3 className="text-base md:text-lg font-semibold truncate">{title}</h3>
         </div>
-        <p className="text-sm leading-6 text-slate-400">{description}</p>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button variant="ghost" onClick={onCancel}>Cancel</Button>
-          <Button variant="danger" onClick={onConfirm}>Confirm</Button>
+        <p className="text-xs md:text-sm leading-relaxed text-slate-400">{description}</p>
+        <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-3">
+          <Button variant="ghost" onClick={onCancel} className="w-full sm:w-auto">Cancel</Button>
+          <Button variant="danger" onClick={onConfirm} className="w-full sm:w-auto">Confirm</Button>
         </div>
       </div>
     </div>
@@ -424,14 +428,14 @@ export function Dropdown({ trigger, items }: { trigger?: React.ReactNode; items:
                     item.onClick();
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition ${
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition min-w-0 ${
                     item.variant === "danger"
                       ? "text-red-400 hover:bg-red-500/10"
                       : "text-slate-300 hover:bg-slate-800 hover:text-white"
                   }`}
                 >
                   {item.icon && <span className="shrink-0">{item.icon}</span>}
-                  {item.label}
+                  <span className="truncate" title={item.label}>{item.label}</span>
                 </button>
               ))}
             </div>

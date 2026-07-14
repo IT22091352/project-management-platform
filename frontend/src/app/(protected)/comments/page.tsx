@@ -74,12 +74,12 @@ export default function CommentsPage() {
   return (
     <section className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Comments</h1>
-          <p className="mt-1 text-sm text-slate-400">Review task activity logs, post progress updates, and collaborate in chat feeds.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Comments</h1>
+          <p className="mt-1 text-xs md:text-sm text-slate-400">Review task activity logs, post progress updates, and collaborate in chat feeds.</p>
         </div>
-        <Button onClick={() => setOpen(true)} className="flex items-center gap-2">
+        <Button onClick={() => setOpen(true)} className="flex items-center justify-center gap-2 w-full sm:w-auto shrink-0">
           <Plus className="h-4 w-4" /> Add Comment
         </Button>
       </div>
@@ -125,20 +125,20 @@ export default function CommentsPage() {
                 </div>
  
                 {/* Conversation Bubble */}
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-xs font-bold text-slate-200">{comment.user?.name}</span>
-                    <span className="text-[10px] text-slate-500 font-semibold flex items-center gap-1"><Clock className="h-3 w-3" /> {dateStr}</span>
+                <div className="flex-1 space-y-1 min-w-0">
+                  <div className="flex items-baseline gap-2 min-w-0">
+                    <span className="text-xs font-bold text-slate-200 truncate max-w-[150px]" title={comment.user?.name ?? undefined}>{comment.user?.name}</span>
+                    <span className="text-[10px] text-slate-500 font-semibold flex items-center gap-1 shrink-0"><Clock className="h-3 w-3" /> {dateStr}</span>
                   </div>
-                  <div className="group relative flex items-start gap-2 max-w-2xl">
-                    <div className="rounded-xl rounded-tl-none border border-slate-800 bg-slate-900 px-4 py-2.5 text-sm text-slate-200 leading-relaxed shadow-sm">
+                  <div className="group relative flex items-start gap-2 max-w-2xl min-w-0">
+                    <div className="rounded-xl rounded-tl-none border border-slate-800 bg-slate-900 px-4 py-2.5 text-sm text-slate-200 leading-relaxed shadow-sm break-words whitespace-pre-wrap max-w-full">
                       {comment.comment}
                     </div>
  
                     {canDelete && (
                       <button
                         onClick={() => setConfirmId(comment.id)}
-                        className="opacity-0 group-hover:opacity-100 transition duration-150 p-2 rounded-lg text-slate-500 hover:bg-slate-800 hover:text-red-400 shrink-0 self-center"
+                        className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition duration-150 p-2 rounded-lg text-slate-500 hover:bg-slate-800 hover:text-red-400 shrink-0 self-center"
                         title="Delete comment"
                       >
                         <Trash className="h-3.5 w-3.5" />

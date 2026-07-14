@@ -19,8 +19,8 @@ export default function SettingsPage() {
     <section className="space-y-8 max-w-4xl">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Settings</h1>
-        <p className="mt-1 text-sm text-slate-400">Configure global workspace options, alert thresholds, layout views, and session security.</p>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Settings</h1>
+        <p className="mt-1 text-xs md:text-sm text-slate-400">Configure global workspace options, alert thresholds, layout views, and session security.</p>
       </div>
  
       <div className="space-y-6">
@@ -30,7 +30,7 @@ export default function SettingsPage() {
             <Settings className="h-5 w-5 text-blue-500" />
             <h3 className="text-base font-semibold text-white">Account Settings</h3>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Workspace Name</label>
               <Input placeholder="Enter workspace name" defaultValue="Operations Center" />
@@ -42,7 +42,7 @@ export default function SettingsPage() {
           </div>
           <p className="text-xs text-slate-500">Configure your organization's display settings and base access domain paths.</p>
           <div className="flex justify-end pt-2">
-            <Button onClick={() => handleSave("Account")}>Save Changes</Button>
+            <Button onClick={() => handleSave("Account")} className="w-full sm:w-auto">Save Changes</Button>
           </div>
         </Card>
  
@@ -53,19 +53,19 @@ export default function SettingsPage() {
             <h3 className="text-base font-semibold text-white">Security Settings</h3>
           </div>
           <div className="space-y-3.5">
-            <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-950/40">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-950/40">
               <div>
                 <h4 className="text-sm font-semibold text-white">Two-Factor Authentication (2FA)</h4>
                 <p className="text-xs text-slate-500 mt-0.5">Secure your administrator and project manager roles with TOTP verification tokens.</p>
               </div>
-              <Button variant="secondary" className="px-3 py-1.5 text-xs">Enable</Button>
+              <Button variant="secondary" className="px-3 py-1.5 text-xs w-full sm:w-auto shrink-0">Enable</Button>
             </div>
-            <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-950/40">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-950/40">
               <div>
                 <h4 className="text-sm font-semibold text-white">API Keys</h4>
                 <p className="text-xs text-slate-500 mt-0.5">Provision secure programmatic read/write access tokens for this project platform.</p>
               </div>
-              <Button variant="secondary" className="px-3 py-1.5 text-xs">Manage</Button>
+              <Button variant="secondary" className="px-3 py-1.5 text-xs w-full sm:w-auto shrink-0">Manage</Button>
             </div>
           </div>
         </Card>
@@ -76,7 +76,7 @@ export default function SettingsPage() {
             <Eye className="h-5 w-5 text-blue-500" />
             <h3 className="text-base font-semibold text-white">Appearance</h3>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-400 uppercase tracking-wider">Display Theme</label>
               <CustomSelect
@@ -102,7 +102,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="flex justify-end pt-2">
-            <Button onClick={() => handleSave("Appearance")}>Save Changes</Button>
+            <Button onClick={() => handleSave("Appearance")} className="w-full sm:w-auto">Save Changes</Button>
           </div>
         </Card>
  
@@ -113,7 +113,7 @@ export default function SettingsPage() {
             <h3 className="text-base font-semibold text-white">Notifications Settings</h3>
           </div>
           <div className="space-y-4 text-sm">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
                 <span className="font-semibold text-slate-200 block">Email Alerts</span>
                 <span className="text-xs text-slate-500 mt-0.5">Send a digest when you are added to a project workspace.</span>
@@ -122,10 +122,10 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={emailAlerts}
                 onChange={(e) => setEmailAlerts(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-800 bg-slate-900 text-blue-500 outline-none focus:ring-1 focus:ring-blue-500/50"
+                className="h-4 w-4 rounded border-slate-800 bg-slate-900 text-blue-500 outline-none focus:ring-1 focus:ring-blue-500/50 shrink-0"
               />
             </div>
-            <div className="flex items-center justify-between pt-3 border-t border-slate-800/60">
+            <div className="flex items-center justify-between gap-4 pt-3 border-t border-slate-800/60">
               <div>
                 <span className="font-semibold text-slate-200 block">Task Assignment Alerts</span>
                 <span className="text-xs text-slate-500 mt-0.5">Send push alerts when a project manager assigns a task list item.</span>
@@ -134,12 +134,12 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={pushAlerts}
                 onChange={(e) => setPushAlerts(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-800 bg-slate-900 text-blue-500 outline-none focus:ring-1 focus:ring-blue-500/50"
+                className="h-4 w-4 rounded border-slate-800 bg-slate-900 text-blue-500 outline-none focus:ring-1 focus:ring-blue-500/50 shrink-0"
               />
             </div>
           </div>
           <div className="flex justify-end pt-2">
-            <Button onClick={() => handleSave("Notifications")}>Save Changes</Button>
+            <Button onClick={() => handleSave("Notifications")} className="w-full sm:w-auto">Save Changes</Button>
           </div>
         </Card>
  
@@ -154,7 +154,7 @@ export default function SettingsPage() {
               <h4 className="text-sm font-semibold text-white">Delete Workspace Data</h4>
               <p className="text-xs text-slate-500 mt-0.5">Permanently delete all projects, active tasks, team member lists, and communication history.</p>
             </div>
-            <Button variant="danger" className="shrink-0" onClick={() => toast.error("Please contact customer support to initiate workspace deletion.")}>
+            <Button variant="danger" className="shrink-0 w-full sm:w-auto" onClick={() => toast.error("Please contact customer support to initiate workspace deletion.")}>
               Delete Workspace
             </Button>
           </div>

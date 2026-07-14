@@ -63,22 +63,22 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Users</h1>
-          <p className="mt-1 text-sm text-slate-400">View platform members, assign directory access, and audit role accounts.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Users</h1>
+          <p className="mt-1 text-xs md:text-sm text-slate-400">View platform members, assign directory access, and audit role accounts.</p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3 sm:flex-row w-full lg:w-auto">
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search users..."
-            className="min-w-56"
+            className="w-full sm:w-56"
           />
           <CustomSelect
             options={ROLE_FILTER_OPTIONS}
             value={roleFilter}
             onChange={(v) => setRoleFilter(String(v))}
             placeholder="Filter by role"
-            className="min-w-48"
+            className="w-full sm:w-48"
           />
         </div>
       </div>
@@ -125,16 +125,16 @@ export default function UsersPage() {
  
                 return (
                   <tr key={user.id} className="hover:bg-slate-850/30 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
+                    <td className="px-6 py-4 whitespace-nowrap min-w-0">
+                      <div className="flex items-center gap-3 min-w-0">
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-xs font-bold text-blue-400 shrink-0">
                           {initials}
                         </div>
-                        <div>
-                          <div className="font-semibold text-white flex items-center gap-1.5 leading-tight">
-                            {user.name}
+                        <div className="min-w-0">
+                          <div className="font-semibold text-white flex items-center gap-1.5 leading-tight max-w-[160px] sm:max-w-[200px] truncate" title={user.name}>
+                            <span className="truncate">{user.name}</span>
                             {isSelf && (
-                              <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-400 uppercase">
+                              <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-400 uppercase shrink-0">
                                 You
                               </span>
                             )}
@@ -142,7 +142,7 @@ export default function UsersPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-slate-300">
+                    <td className="px-6 py-4 whitespace-nowrap text-slate-300 max-w-[180px] sm:max-w-[240px] truncate" title={user.email}>
                       {user.email}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

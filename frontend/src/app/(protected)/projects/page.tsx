@@ -397,31 +397,31 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Projects</h1>
-          <p className="mt-1 text-sm text-slate-400">Manage and monitor project workspaces, task distributions, and memberships.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Projects</h1>
+          <p className="mt-1 text-xs md:text-sm text-slate-400">Manage and monitor project workspaces, task distributions, and memberships.</p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3 sm:flex-row w-full lg:w-auto">
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search projects..."
-            className="min-w-64"
+            className="w-full sm:min-w-64"
           />
           {canManageProjects && (
-            <Button onClick={() => setCreateOpen(true)}>Create Project</Button>
+            <Button onClick={() => setCreateOpen(true)} className="w-full sm:w-auto">Create Project</Button>
           )}
         </div>
       </div>
  
       {loading ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => <SkeletonCard key={i} lines={4} />)}
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} lines={4} />)}
         </div>
       ) : null}
       {error ? <Card className="p-4 text-red-400 bg-red-950/20 border-red-900/50">{error}</Card> : null}
  
       {/* Project cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filtered.map((project) => {
           const taskCount = project._count?.tasks ?? 0;
           const status = taskCount > 0 ? "IN_PROGRESS" : "PENDING";
@@ -456,22 +456,28 @@ export default function ProjectsPage() {
           ];
  
           return (
-            <Card key={project.id} className="p-6 flex flex-col justify-between h-full hover:bg-slate-800/40">
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2">
+            <Card key={project.id} className="p-6 flex flex-col justify-between h-full hover:bg-slate-800/40 min-w-0">
+              <div className="min-w-0">
+                <div className="flex items-start justify-between gap-3 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <Folder className="h-5 w-5 text-blue-500 shrink-0" />
-                    <h3 className="text-lg font-semibold text-white tracking-tight leading-none truncate">{project.title}</h3>
+                    <h3 className="text-lg font-semibold text-white tracking-tight leading-none truncate" title={project.title}>{project.title}</h3>
                   </div>
-                  <Dropdown items={actionItems} />
+                  <div className="shrink-0">
+                    <Dropdown items={actionItems} />
+                  </div>
                 </div>
-                <p className="mt-3 text-sm text-slate-400 line-clamp-3 leading-relaxed min-h-[60px]">{project.description || "No description provided."}</p>
+                <p className="mt-3 text-sm text-slate-400 line-clamp-3 leading-relaxed min-h-[60px]" title={project.description || "No description provided."}>
+                  {project.description || "No description provided."}
+                </p>
               </div>
  
-              <div className="mt-6 pt-5 border-t border-slate-800/80 space-y-3.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 font-semibold uppercase tracking-wider">Manager</span>
-                  <span className="font-semibold text-slate-200">{project.manager?.name || "Unassigned"}</span>
+              <div className="mt-6 pt-5 border-t border-slate-800/80 space-y-3.5 min-w-0">
+                <div className="flex items-center justify-between text-xs gap-3">
+                  <span className="text-slate-500 font-semibold uppercase tracking-wider shrink-0">Manager</span>
+                  <span className="font-semibold text-slate-200 max-w-[150px] truncate text-right block" title={project.manager?.name || "Unassigned"}>
+                    {project.manager?.name || "Unassigned"}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500 font-semibold uppercase tracking-wider">Tasks</span>
@@ -534,7 +540,7 @@ export default function ProjectsPage() {
               <h4 className="text-xl font-bold text-white">{viewProject.title}</h4>
               <p className="mt-2 text-sm text-slate-400 leading-relaxed">{viewProject.description || "No description provided."}</p>
             </div>
-            <div className="grid gap-4 border-t border-slate-800 pt-5 sm:grid-cols-2 text-sm">
+            <div className="grid gap-4 border-t border-slate-800 pt-5 grid-cols-1 sm:grid-cols-2 text-sm">
               <div className="space-y-1">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Manager</span>
                 <div className="flex items-center gap-2">
@@ -553,7 +559,7 @@ export default function ProjectsPage() {
             <div className="border-t border-slate-800 pt-5">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2.5">Team Members ({viewProject.members?.length ?? 0})</span>
               {viewProject.members && viewProject.members.length > 0 ? (
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
                   {viewProject.members.map((member: any) => (
                     <div key={member.id} className="flex items-center justify-between p-2.5 rounded-xl border border-slate-800 bg-slate-950/40">
                       <div className="flex items-center gap-2">

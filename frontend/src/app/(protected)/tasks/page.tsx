@@ -355,51 +355,51 @@ export default function TasksPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Tasks</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Tasks</h1>
+          <p className="mt-1 text-xs md:text-sm text-slate-400">
             {isTeamMember
               ? "Track your assigned task lists and submit progress updates."
               : "Manage task creation, assignments, due dates, priorities, and workflow statuses."}
           </p>
         </div>
         {canManageTasks && (
-          <Button onClick={() => setCreateOpen(true)}>Create Task</Button>
+          <Button onClick={() => setCreateOpen(true)} className="w-full lg:w-auto">Create Task</Button>
         )}
       </div>
  
       {/* Search + filters */}
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row w-full">
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search tasks..."
-          className="flex-1"
+          className="w-full sm:flex-1"
         />
         <CustomSelect
           options={[{ value: "", label: "All Priorities" }, ...PRIORITY_OPTIONS]}
           value={filterPriority}
           onChange={(v) => setFilterPriority(String(v))}
           placeholder="Priority"
-          className="min-w-40"
+          className="w-full sm:w-48"
         />
         <CustomSelect
           options={[{ value: "", label: "All Statuses" }, ...STATUS_OPTIONS]}
           value={filterStatus}
           onChange={(v) => setFilterStatus(String(v))}
           placeholder="Status"
-          className="min-w-40"
+          className="w-full sm:w-48"
         />
       </div>
  
       {loading ? (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} lines={4} />)}
         </div>
       ) : null}
       {error ? <Card className="p-4 text-red-400 bg-red-950/20 border-red-900/50">{error}</Card> : null}
  
       {/* Task cards */}
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filtered.map((task) => {
           // Action Dropdown Items
           const actionItems = [
@@ -426,36 +426,44 @@ export default function TasksPage() {
           ];
  
           return (
-            <Card key={task.id} className="p-6 flex flex-col justify-between h-full hover:bg-slate-800/40">
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-base font-semibold text-white tracking-tight leading-snug">{task.title}</h3>
+            <Card key={task.id} className="p-6 flex flex-col justify-between h-full hover:bg-slate-800/40 min-w-0">
+              <div className="min-w-0">
+                <div className="flex items-start justify-between gap-3 min-w-0">
+                  <h3 className="text-base font-semibold text-white tracking-tight leading-snug line-clamp-2 flex-1" title={task.title}>{task.title}</h3>
                   <div className="flex shrink-0 items-center gap-1.5">
                     <StatusBadge status={task.status} />
                     <Dropdown items={actionItems} />
                   </div>
                 </div>
  
-                {task.description && (
-                  <p className="mt-3 text-sm text-slate-400 line-clamp-2 leading-relaxed">{task.description}</p>
+                {task.description ? (
+                  <p className="mt-3 text-sm text-slate-400 line-clamp-2 leading-relaxed min-h-[40px]" title={task.description ?? undefined}>{task.description}</p>
+                ) : (
+                  <p className="mt-3 text-sm text-slate-600 italic line-clamp-2 leading-relaxed min-h-[40px]">No description.</p>
                 )}
               </div>
  
-              <div className="mt-5 pt-4 border-t border-slate-800/80 space-y-2.5 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 font-semibold uppercase tracking-wider">Priority</span>
+              <div className="mt-5 pt-4 border-t border-slate-800/80 space-y-2.5 text-xs min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-slate-500 font-semibold uppercase tracking-wider shrink-0">Priority</span>
                   <PriorityBadge priority={task.priority} />
                 </div>
                 {task.project?.title && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-semibold uppercase tracking-wider">Project</span>
-                    <span className="font-semibold text-slate-200 flex items-center gap-1"><Folder className="h-3 w-3 text-slate-400" /> {task.project.title}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-500 font-semibold uppercase tracking-wider shrink-0">Project</span>
+                    <span className="font-semibold text-slate-200 flex items-center gap-1 max-w-[150px] truncate" title={task.project.title}>
+                      <Folder className="h-3 w-3 text-slate-400 shrink-0" />
+                      <span className="truncate">{task.project.title}</span>
+                    </span>
                   </div>
                 )}
                 {task.assignee?.name && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-semibold uppercase tracking-wider">Assignee</span>
-                    <span className="font-semibold text-slate-200 flex items-center gap-1"><User className="h-3 w-3 text-slate-400" /> {task.assignee.name}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-500 font-semibold uppercase tracking-wider shrink-0">Assignee</span>
+                    <span className="font-semibold text-slate-200 flex items-center gap-1 max-w-[150px] truncate" title={task.assignee.name}>
+                      <User className="h-3 w-3 text-slate-400 shrink-0" />
+                      <span className="truncate">{task.assignee.name}</span>
+                    </span>
                   </div>
                 )}
                 {task.dueDate && (

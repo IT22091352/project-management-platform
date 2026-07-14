@@ -63,13 +63,13 @@ export default function ProfilePage() {
     <section className="space-y-8 max-w-4xl">
       {/* Page Title */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Profile</h1>
-        <p className="mt-1 text-sm text-slate-400">Configure your personal information, contact email, and security credentials.</p>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Profile</h1>
+        <p className="mt-1 text-xs md:text-sm text-slate-400">Configure your personal information, contact email, and security credentials.</p>
       </div>
  
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
         {/* Left Column: Avatar & Overview */}
-        <Card className="p-6 md:col-span-1 flex flex-col items-center text-center justify-center space-y-4">
+        <Card className="p-6 md:col-span-1 flex flex-col items-center text-center justify-center space-y-4 py-8">
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-500/10 border border-blue-500/20 text-3xl font-bold text-blue-400 shadow-sm shadow-blue-500/10">
             {initials}
           </div>
@@ -101,7 +101,7 @@ export default function ProfilePage() {
                 <Input placeholder="Email" type="email" {...registerProfile("email", { required: true })} />
               </div>
               <div className="flex justify-end pt-2">
-                <Button type="submit" disabled={updatingProfile}>
+                <Button type="submit" disabled={updatingProfile} className="w-full sm:w-auto">
                   {updatingProfile ? <><Spinner className="h-4 w-4" /> Saving…</> : "Save Profile"}
                 </Button>
               </div>
@@ -125,7 +125,7 @@ export default function ProfilePage() {
                 <Input placeholder="Repeat password" type="password" {...registerPassword("confirmPassword", { required: true })} />
               </div>
               <div className="flex justify-end pt-2">
-                <Button type="submit" disabled={updatingPassword}>
+                <Button type="submit" disabled={updatingPassword} className="w-full sm:w-auto">
                   {updatingPassword ? <><Spinner className="h-4 w-4" /> Updating…</> : "Change Password"}
                 </Button>
               </div>

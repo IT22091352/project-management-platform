@@ -122,14 +122,14 @@ export function NotificationsDropdown() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className={`truncate text-sm ${!notification.isRead ? "font-semibold text-white" : "font-medium text-slate-200"}`}>
+                        <p className={`truncate text-sm ${!notification.isRead ? "font-semibold text-white" : "font-medium text-slate-200"}`} title={notification.title}>
                           {notification.title}
                         </p>
                         {!notification.isRead && (
                           <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
                         )}
                       </div>
-                      <p className={`mt-0.5 text-xs ${!notification.isRead ? "text-slate-300" : "text-slate-400"}`}>
+                      <p className={`mt-0.5 text-xs line-clamp-2 ${!notification.isRead ? "text-slate-300" : "text-slate-400"}`} title={notification.message}>
                         {notification.message}
                       </p>
                       <p className="mt-1.5 text-[10px] font-medium text-slate-500">
